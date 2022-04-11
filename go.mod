@@ -3,6 +3,7 @@ module github.com/jimyag/shop
 go 1.18
 
 require (
+	github.com/anaskhan96/go-password-encoder v0.0.0-20201010210601-c765b799fd72
 	github.com/hashicorp/consul/api v1.12.0
 	github.com/lib/pq v1.10.5
 	github.com/spf13/viper v1.10.1
