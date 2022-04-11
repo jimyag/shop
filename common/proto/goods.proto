@@ -1,0 +1,38 @@
+syntax = "proto3";
+option go_package = ".;proto";
+import "empty.proto";
+service goods{
+  // 商品
+  rpc CreateGoods(CreateGoodRequest)returns(GoodsInfo); // 创建商品
+  rpc UpdateGoods(GoodsInfo)returns(GoodsInfo); // 更新商品信息
+  rpc GetGoods(GoodID)returns(GoodsInfo); // 获得商品信息
+  rpc DeleteGoods(GoodsInfo)returns(Empty);// 删除good信息
+  rpc GetGoodsBatchInfo(ManyGoodsID)returns(ManyGoodsInfos);//批量获得商品信息
+}
+
+
+message CreateGoodRequest{
+  string name = 1;
+  float price = 2;
+}
+
+message GoodsInfo{
+  int32 id = 1;
+  string name = 2;
+  float price = 3;
+}
+
+message ManyGoodsInfos{
+  int32 total = 1;
+  repeated GoodsInfo data = 2;
+}
+
+message GoodID{
+  int32 id = 1;
+}
+
+message ManyGoodsID{
+  repeated GoodID goodsIDs = 1;
+}
+
+
