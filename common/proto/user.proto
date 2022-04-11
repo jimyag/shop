@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+option go_package = ".;proto";
+
+service User{
+  rpc GetUserList(PageIngo) returns(UserListResponse){}; // 获得用户列表
+  rpc GetUserByEmail(EmailRequest) returns(UserInfoResponse){}; // 使用邮箱获得用户信息
+  rpc GetUserById(IdRequest) returns(UserInfoResponse){}; // 使用Id获得用户信息
+  rpc CreateUser(CreateUserRequest)returns(UserInfoResponse){}; // 添加用户
+  rpc UpdateUser(UpdateUserRequest)returns(UserInfoResponse){}; // 更新用户信息
+  rpc CheckPassword(PasswordCheckInfo) returns(CheckPasswordResponse){}; //检查用户密码
+}
+
+message PasswordCheckInfo{
+  string password = 1;
+  string encryptedPassword = 2;
+}
+
+message CheckPasswordResponse{
+  bool success = 1;
+}
+
+message UpdateUserRequest{
+  int32 id = 1;
+  string email = 2;
+  string password = 3;
+  string nickname = 4;
+  string gender = 5;
+  int32 role = 6;
+}
+
+message CreateUserRequest{
+  string email = 1;
+  string password = 2;
+  string nickname = 3;
+  string gender = 4;
+  int32 role = 5;
+}
+
+message EmailRequest{
+  string email = 1;
+}
+
+message IdRequest{
+  uint32 id = 1;
+}
+
+message PageIngo{
+  uint32 pageNum = 1;
+  uint32 pageSize = 2;
+}
+
+message UserInfoResponse{
+  int32 id = 1;
+  int64 created_at = 2;
+  int64 updated_at = 3;
+  string email = 4;
+  string password = 5;
+  string nickname = 6;
+  string gender = 7;
+  int32 role = 8;
+}
+
+message UserListResponse{
+  int32 total = 1;
+  repeated UserInfoResponse data = 2;
+}
