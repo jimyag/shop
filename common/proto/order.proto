@@ -1,0 +1,104 @@
+syntax = "proto3";
+option go_package = ".;proto";
+import "empty.proto";
+service order{
+  // 购物车
+  rpc CartItemList(CartItemListRequest) returns(CartItemListResponse);// 获取用户的购物车中的商品
+  rpc CreateCartItem(CreateCartItemRequest) returns(ShopCartInfoResponse);// 添加商品到购物车
+  rpc DeleteCartItems(DeleteCartItemsRequest)returns (Empty);  // 删除购物车中商品的记录
+  rpc UpdateCartItem(UpdateCartItemRequest)returns(Empty);// 修改购物车中商品条目信息 包括选中 数量
+
+  // 订单
+  rpc CreateOrder(CreateOrderRequest)returns(OrderInfo); // 通过购物车中的信息新建订单
+  // 创建订单
+  //    从购物车获取选中的商品
+  //    商品的金额自己算 跨服务srv调用
+  //    库存的扣减 库存服务跨服务
+  //    订单的基本信息表，订单内部商品信息表。
+  //    从购物车中删除已购买的记录
+  // 获得订单列表
+  rpc GetOrderList(GetOrderListRequest)returns(GetOrderListResponse);
+  // 订单的详情
+  rpc GetOrderDetail(GetOrderDetailRequest)returns(OrderInfo);
+  // 更新订单状态
+  rpc UpdateOrderStatus(OrderInfo) returns(OrderInfo);
+}
+
+
+message CartItemListRequest{
+  int32 uid = 1;
+}
+
+// 把商品添加到购物车中的接口
+message CreateCartItemRequest{
+  int32 userID = 1;
+  int32 goodsID = 2;
+  int32 nums = 3;
+  bool checked = 4;
+}
+
+// 单条购物车的记录
+message ShopCartInfoResponse{
+  int32 id = 1;
+  int32 userID = 2;
+  int32 goodsID = 3;
+  int32 nums = 4;
+  bool checked = 5; // 是否被选中
+}
+// 购物车的所有内容
+message CartItemListResponse{
+  int32 total = 1;
+  repeated ShopCartInfoResponse data = 2;
+}
+
+message DeleteCartItemsRequest{
+  int32 userID = 1;
+  int32 goodsID = 2;
+}
+
+message UpdateCartItemRequest{
+  int32 userID = 1;
+  int32 goodsID = 2;
+  int32 nums = 3;
+  bool checked = 4;
+}
+
+// 通过uid拿到用户选中的购物车记录然后下单
+message CreateOrderRequest{
+  int32 userID = 1;
+  string address = 2;
+  string mobile = 3;
+  string name = 4;
+  string post = 5; // 邮政编码
+
+}
+
+message OrderInfo{
+  int32 id = 1;
+  int32 userID = 2;
+  int32 orderID = 3;
+  string payType = 4;
+  int32 status = 5; // 支付的状态
+  float total = 6; // 总金额
+  string post = 7;
+  string address = 8;
+  string name = 9;
+  string mobile = 10;
+  // 下单时间就是create_at
+}
+
+message GetOrderListRequest{
+  int32 userID = 1;
+  int32 pageSize = 2;
+  int32 pageNum = 3;
+}
+
+message GetOrderListResponse{
+  int32 total = 1;
+  repeated OrderInfo data = 2;
+}
+
+message GetOrderDetailRequest{
+  int32 userID = 1;
+  int32 orderID = 2;
+}
