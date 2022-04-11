@@ -1,0 +1,16 @@
+postgres:
+  host: "localhost"
+  port: 35432
+  database: "shop"
+  user: "postgres"
+  password: "postgres"
+  type: "postgres"
+
+service-info:
+  host: "localhost"
+  port: 50051
+  name: "user-rpc"
+
+jaeger-info:
+  host: "localhost"
+  port: 6831
