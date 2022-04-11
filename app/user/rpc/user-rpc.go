@@ -11,4 +11,7 @@ func main() {
 
 	// 拉取远程配置中心中的配置
 	initialize.InitRemoteConfig()
+
+	// 初始化 database
+	initialize.InitDataBase()
 }
