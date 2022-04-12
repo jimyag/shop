@@ -46,12 +46,7 @@ func main() {
 	userServer := handler.NewUserServer(sqlStore, options)
 	proto.RegisterUserServer(grpcServer, userServer)
 
-	// 拿到可用的端口
-	port, err := port2.GetFreePort()
-	if err == nil {
-		global.RemoteConfig.ServiceInfo.Port = port
-	}
-
+	// 优先使用配置的端口
 	listener, err := net.Listen(
 		"tcp",
 		fmt.Sprintf("%s:%d",
@@ -59,14 +54,39 @@ func main() {
 			global.RemoteConfig.ServiceInfo.Port,
 		),
 	)
+	// 如果配置的端口不能使用
 	if err != nil {
-		global.Logger.Fatal(
-			"监听端口失败",
-			zap.Error(err),
-			zap.String("host", global.RemoteConfig.ServiceInfo.Host),
-			zap.Int("port", global.RemoteConfig.ServiceInfo.Port),
-		)
+		// 拿到可用的端口
+		port, err := port2.GetFreePort()
+		if err == nil {
+			global.RemoteConfig.ServiceInfo.Port = port
+			listener, err = net.Listen(
+				"tcp",
+				fmt.Sprintf("%s:%d",
+					global.RemoteConfig.ServiceInfo.Host,
+					global.RemoteConfig.ServiceInfo.Port,
+				),
+			)
+			if err != nil {
+				global.Logger.Fatal(
+					"监听端口失败",
+					zap.Error(err),
+					zap.String("host", global.RemoteConfig.ServiceInfo.Host),
+					zap.Int("port", global.RemoteConfig.ServiceInfo.Port),
+				)
+			}
+		} else {
+			global.Logger.Fatal(
+				"获得可用端口失败",
+				zap.Error(err),
+			)
+		}
+
 	}
+	global.Logger.Info("监听端口",
+		zap.String("host", global.RemoteConfig.ServiceInfo.Host),
+		zap.Int("port", global.RemoteConfig.ServiceInfo.Port),
+	)
 
 	// 注册 grpc 健康检查
 	grpc_health_v1.RegisterHealthServer(grpcServer, health.NewServer())
