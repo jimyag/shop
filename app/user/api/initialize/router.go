@@ -20,6 +20,7 @@ func InitRouter() *gin.Engine {
 	healthRouter.HealthRouter(rootGroup)
 
 	// 用户的路由
-	router2.UserRouter(rootGroup)
+	userGroup := router.Group("/user/v1")
+	router2.UserRouter(userGroup)
 	return router
 }
