@@ -7,7 +7,7 @@ postgres:
   type: "postgres"
 
 service-info:
-  host: "localhost"
+  host: "192.168.0.2"
   port: 50051
   name: "user-rpc"
 
