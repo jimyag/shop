@@ -20,8 +20,8 @@ type RegistryGrpc struct {
 //
 // NewRegistryRpcClient
 //  @Description:
-//  @param host
-//  @param port
+//  @param host consul 的host
+//  @param port consul 的port
 //  @return RegisterClient
 //
 func NewRegistryRpcClient(host string, port int) RegisterClient {
@@ -117,8 +117,8 @@ type RegistryHttp struct {
 //
 // NewRegistryHttpClient
 //  @Description:
-//  @param host
-//  @param port
+//  @param host consul 的host
+//  @param port consul 的port
 //  @return RegisterClient
 //
 func NewRegistryHttpClient(host string, port int) RegisterClient {
