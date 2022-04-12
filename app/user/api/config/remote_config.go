@@ -68,7 +68,7 @@ type GrpcServer struct {
 //  @Description: 整个服务的配置
 //
 type ServerInfo struct {
-	ServiceInfo    ServiceInfo  `mapstructure:"service-info"`     // 本地服务的信息
+	ServiceInfo    ServiceInfo  `mapstructure:"server-info"`      // 本地服务的信息
 	JaegerInfo     JaegerConfig `mapstructure:"jaeger-info"`      // jaeger 的 配置
 	Secret         Secret       `mapstructure:"secret"`           // token 密钥
 	Redis          RedisInfo    `mapstructure:"redis"`            // redis 的配置
