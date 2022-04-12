@@ -3,6 +3,7 @@ package initialize
 import (
 	"github.com/gin-gonic/gin"
 
+	router2 "github.com/jimyag/shop/app/user/api/router"
 	healthRouter "github.com/jimyag/shop/common/utils/router"
 )
 
@@ -18,5 +19,7 @@ func InitRouter() *gin.Engine {
 	// 初始健康检查的路由
 	healthRouter.HealthRouter(rootGroup)
 
+	// 用户的路由
+	router2.UserRouter(rootGroup)
 	return router
 }
