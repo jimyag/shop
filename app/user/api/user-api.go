@@ -33,6 +33,9 @@ func main() {
 	// 初始化 redis 的配置
 	initialize.InitRedis()
 
+	// 初始化 validate 和 trans
+	initialize.InitValidateAndTrans()
+
 	registerClient := consul.NewRegistryHttpClient(
 		global.ConfigCenter.Host,
 		global.ConfigCenter.Port,
