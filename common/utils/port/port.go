@@ -2,6 +2,12 @@ package port
 
 import "net"
 
+//
+// GetFreePort
+//  @Description: 拿到本地可用的端口
+//  @return int
+//  @return error
+//
 func GetFreePort() (int, error) {
 	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
 	if err != nil {

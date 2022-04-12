@@ -16,11 +16,22 @@ import (
 	"github.com/jimyag/shop/common/proto"
 )
 
+//
+// UserServer
+//  @Description: user server 的实例
+//
 type UserServer struct {
 	model.Store
 	options *password.Options
 }
 
+//
+// NewUserServer
+//  @Description: 使用 store password 的 options 创建 userServer
+//  @param store 存储的方式
+//  @param options 密码相关的选项
+//  @return *UserServer
+//
 func NewUserServer(store model.Store, options *password.Options) *UserServer {
 	return &UserServer{
 		Store:   store,
@@ -28,6 +39,12 @@ func NewUserServer(store model.Store, options *password.Options) *UserServer {
 	}
 }
 
+//
+// userModel2UserInfoResponse
+//  @Description: 将user的model转换为user的响应
+//  @param user
+//  @return *proto.UserInfoResponse
+//
 func userModel2UserInfoResponse(user model.User) *proto.UserInfoResponse {
 	return &proto.UserInfoResponse{
 		Id:        int32(user.ID),
@@ -41,6 +58,15 @@ func userModel2UserInfoResponse(user model.User) *proto.UserInfoResponse {
 	}
 }
 
+//
+// GetUserList
+//  @Description: 获得用户信息列表
+//  @receiver u
+//  @param ctx
+//  @param req
+//  @return *proto.UserListResponse
+//  @return error
+//
 func (u *UserServer) GetUserList(ctx context.Context, req *proto.PageIngo) (*proto.UserListResponse, error) {
 	arg := model.ListUsersParams{
 		Limit:  int32(req.PageSize),
@@ -51,7 +77,7 @@ func (u *UserServer) GetUserList(ctx context.Context, req *proto.PageIngo) (*pro
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "获得用户列表信息失败")
 	}
-	// todo 获得total
+
 	userResponseList := make([]*proto.UserInfoResponse, len(users))
 	for i, user := range users {
 		userResponseList[i] = userModel2UserInfoResponse(user)
@@ -63,6 +89,16 @@ func (u *UserServer) GetUserList(ctx context.Context, req *proto.PageIngo) (*pro
 
 	return &rsp, nil
 }
+
+//
+// GetUserByEmail
+//  @Description: 通过 Email 获得用户信息
+//  @receiver u
+//  @param ctx
+//  @param req
+//  @return *proto.UserInfoResponse
+//  @return error
+//
 func (u *UserServer) GetUserByEmail(ctx context.Context, req *proto.EmailRequest) (*proto.UserInfoResponse, error) {
 	user, err := u.Store.GetUserByEmail(ctx, req.GetEmail())
 	if err != nil {
@@ -71,6 +107,16 @@ func (u *UserServer) GetUserByEmail(ctx context.Context, req *proto.EmailRequest
 	rsp := userModel2UserInfoResponse(user)
 	return rsp, nil
 }
+
+//
+// GetUserById
+//  @Description: 通过 uid 获得用户信息
+//  @receiver u
+//  @param ctx
+//  @param req
+//  @return *proto.UserInfoResponse
+//  @return error
+//
 func (u *UserServer) GetUserById(ctx context.Context, req *proto.IdRequest) (*proto.UserInfoResponse, error) {
 	user, err := u.Store.GetUserById(ctx, int64(req.GetId()))
 	if err != nil {
@@ -80,7 +126,15 @@ func (u *UserServer) GetUserById(ctx context.Context, req *proto.IdRequest) (*pr
 	return rsp, nil
 }
 
-// CreateUser 密码这里处理
+//
+// CreateUser
+//  @Description: 创建用户 创建的时候只需要穿原始的密码即可，这里会进行加密
+//  @receiver u
+//  @param ctx
+//  @param req
+//  @return *proto.UserInfoResponse
+//  @return error
+//
 func (u *UserServer) CreateUser(ctx context.Context, req *proto.CreateUserRequest) (*proto.UserInfoResponse, error) {
 	salt, pwd := password.Encode(req.Password, u.options)
 	createUserParams := model.CreateUserParams{
@@ -115,6 +169,15 @@ func (u *UserServer) CreateUser(ctx context.Context, req *proto.CreateUserReques
 	return rsp, nil
 }
 
+//
+// UpdateUser
+//  @Description: 更新用户的信息，如果有的话才会更新 字段为空的话保持原来的
+//  @receiver u
+//  @param ctx
+//  @param req
+//  @return *proto.UserInfoResponse
+//  @return error
+//
 func (u *UserServer) UpdateUser(ctx context.Context, req *proto.UpdateUserRequest) (*proto.UserInfoResponse, error) {
 	arg := model.UpdateUserParams{
 		UpdatedAt: time.Now(),
@@ -159,6 +222,16 @@ func (u *UserServer) UpdateUser(ctx context.Context, req *proto.UpdateUserReques
 	rsp := userModel2UserInfoResponse(user)
 	return rsp, nil
 }
+
+//
+// CheckPassword
+//  @Description: 检查用户的密码是否合规
+//  @receiver u
+//  @param ctx
+//  @param req
+//  @return *proto.CheckPasswordResponse
+//  @return error
+//
 func (u *UserServer) CheckPassword(ctx context.Context, req *proto.PasswordCheckInfo) (*proto.CheckPasswordResponse, error) {
 	encryptedPasswordInfo := strings.Split(req.GetEncryptedPassword(), "$")
 	check := password.Verify(req.Password, encryptedPasswordInfo[2], encryptedPasswordInfo[3], u.options)

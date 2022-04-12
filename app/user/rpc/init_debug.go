@@ -9,6 +9,10 @@ const (
 	fileName      = "remote-config.yaml"
 )
 
+//
+// main
+//  @Description: 用来初始化远程配置文件
+//
 func main() {
 	initialize.LocalConfigToRemoteConfig(consulAddress, debugPath, releasePath, fileName)
 }

@@ -8,6 +8,10 @@ import (
 	"github.com/jimyag/shop/app/user/rpc/global"
 )
 
+//
+// InitLogger
+//  @Description: 初始化日志
+//
 func InitLogger() {
 	var err error
 	global.Logger, err = zap.NewProduction()

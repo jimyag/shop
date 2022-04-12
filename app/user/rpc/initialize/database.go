@@ -10,6 +10,10 @@ import (
 	"github.com/jimyag/shop/app/user/rpc/global"
 )
 
+//
+// InitDataBase
+//  @Description: 初始化数据库的连接
+//
 func InitDataBase() {
 	var err error
 	dbSource := fmt.Sprintf("%s://%s:%s@%s:%d/%s?sslmode=disable",

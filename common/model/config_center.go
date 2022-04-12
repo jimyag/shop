@@ -1,6 +1,9 @@
 package model
 
-// ConfigCenterInfo 配置中心的位置信息
+//
+// ConfigCenterInfo
+//  @Description: 配置中心的位置信息
+//
 type ConfigCenterInfo struct {
 	Host        string `mapstructure:"host"`         // consul所在的host
 	Port        int    `mapstructure:"port"`         // consul的port

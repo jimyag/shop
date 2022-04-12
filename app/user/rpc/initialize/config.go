@@ -11,7 +11,10 @@ import (
 	"github.com/jimyag/shop/common/utils/env"
 )
 
-// InitConfigCenter 初始化配置中心的配置
+//
+// InitConfigCenter
+//  @Description: 初始化配置中心的配置
+//
 func InitConfigCenter() {
 	configCenterPath := "config-center.yaml"
 
@@ -29,7 +32,10 @@ func InitConfigCenter() {
 
 }
 
-// InitRemoteConfig 拉取远程配置中心的配置
+//
+// InitRemoteConfig
+//  @Description: 拉取远程配置中心的配置
+//
 func InitRemoteConfig() {
 	v := viper.New()
 

@@ -7,6 +7,14 @@ import (
 	consulapi "github.com/hashicorp/consul/api"
 )
 
+//
+// LocalConfigToRemoteConfig
+//  @Description: 配置文件上传到consul中
+//  @param consulAddress
+//  @param debugPath
+//  @param releasePath
+//  @param filename
+//
 func LocalConfigToRemoteConfig(consulAddress, debugPath, releasePath, filename string) {
 	value, err := ioutil.ReadFile(filename)
 	if err != nil {
