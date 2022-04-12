@@ -21,6 +21,13 @@ type UserServer struct {
 	options *password.Options
 }
 
+func NewUserServer(store model.Store, options *password.Options) *UserServer {
+	return &UserServer{
+		Store:   store,
+		options: options,
+	}
+}
+
 func userModel2UserInfoResponse(user model.User) *proto.UserInfoResponse {
 	return &proto.UserInfoResponse{
 		Id:        int32(user.ID),
