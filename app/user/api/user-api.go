@@ -30,6 +30,9 @@ func main() {
 	// 初始化router
 	router := initialize.InitRouter()
 
+	// 初始化 redis 的配置
+	initialize.InitRedis()
+
 	registerClient := consul.NewRegistryHttpClient(
 		global.ConfigCenter.Host,
 		global.ConfigCenter.Port,
