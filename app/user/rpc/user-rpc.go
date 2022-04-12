@@ -9,7 +9,6 @@ import (
 	"syscall"
 
 	"github.com/anaskhan96/go-password-encoder"
-	"github.com/google/uuid"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
@@ -22,6 +21,7 @@ import (
 	"github.com/jimyag/shop/common/proto"
 	port2 "github.com/jimyag/shop/common/utils/port"
 	"github.com/jimyag/shop/common/utils/register/consul"
+	uuid2 "github.com/jimyag/shop/common/utils/uuid"
 )
 
 func main() {
@@ -96,13 +96,8 @@ func main() {
 		global.ConfigCenter.Port,
 	)
 	// 随机生成服务的id
-	var serviceID uuid.UUID
-	for {
-		serviceID, err = uuid.NewRandom()
-		if err == nil {
-			break
-		}
-	}
+	serviceID := uuid2.GetUUid()
+
 	// 注册服务
 	err = registerClient.Register(
 		global.RemoteConfig.ServiceInfo.Host,
