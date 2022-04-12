@@ -71,7 +71,7 @@ func (r *RegistryGrpc) Register(host string, port int, name string, tags []strin
 			port,
 		),
 		Timeout:                        "3s",
-		Interval:                       "5s",
+		Interval:                       "50s",
 		DeregisterCriticalServiceAfter: "100s",
 	}
 
@@ -158,7 +158,7 @@ func (r *RegistryHttp) Register(host string, port int, name string, tags []strin
 			port,
 		),
 		Timeout:                        "3s",
-		Interval:                       "5s",
+		Interval:                       "50s",
 		DeregisterCriticalServiceAfter: "100s",
 	}
 
