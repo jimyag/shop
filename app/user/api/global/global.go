@@ -7,6 +7,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/jimyag/shop/app/user/api/config"
+	"github.com/jimyag/shop/app/user/api/tools/paseto"
 	"github.com/jimyag/shop/common/model"
 	"github.com/jimyag/shop/common/proto"
 )
@@ -19,6 +20,7 @@ var (
 	Redis         *AllRedis               // 所有的redis的配置
 	Trans         ut.Translator           // 公共的翻译
 	Validate      *validator.Validate     // 公共的validate
+	PasetoMaker   *paseto.PasetoMaker     // paseto 的maker
 )
 
 type AllRedis struct {

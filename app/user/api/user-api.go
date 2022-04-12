@@ -36,6 +36,9 @@ func main() {
 	// 初始化 validate 和 trans
 	initialize.InitValidateAndTrans()
 
+	// 初始化Paseto
+	initialize.InitPaseto()
+
 	registerClient := consul.NewRegistryHttpClient(
 		global.ConfigCenter.Host,
 		global.ConfigCenter.Port,
