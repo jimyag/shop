@@ -11,4 +11,7 @@ func main() {
 
 	// 从配置中心拉取配置
 	initialize.InitRemoteConfig()
+
+	// 初始化 grpc 的 client
+	initialize.InitGrpcClient()
 }
