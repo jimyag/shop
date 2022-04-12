@@ -28,4 +28,4 @@ timeout:
   create-user-email: 5
 
 user-grpc-server:
-  name: "user-srv"
+  name: "user-rpc"
