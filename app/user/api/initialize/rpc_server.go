@@ -3,6 +3,7 @@ package initialize
 import (
 	"fmt"
 
+	_ "github.com/mbobakov/grpc-consul-resolver"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 
@@ -31,6 +32,7 @@ func initUserClient() {
 			global.RemoteConfig.UserGrpcServer.Name,
 		),
 		grpc.WithInsecure(),
+		grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy": "round_robin"}`),
 	)
 
 	if err != nil {
