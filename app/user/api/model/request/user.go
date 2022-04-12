@@ -75,3 +75,12 @@ type ChangeRole struct {
 	Id   int32 `json:"id" validate:"required,min=1"`
 	Role int32 `json:"role" validate:"required,oneof=1 2" label:"权限"`
 }
+
+//
+// GetUserList
+//  @Description: 分页获得用户信息参数
+//
+type GetUserList struct {
+	PageNum  int `json:"page_num" form:"page_num" validate:"required,min=1"`
+	PageSize int `json:"page_size" form:"page_size" validate:"required,min=1"`
+}
