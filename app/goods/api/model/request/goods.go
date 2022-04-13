@@ -26,3 +26,11 @@ type UpdateGoods struct {
 type GoodsIDRequest struct {
 	ID int32 `json:"id" validate:"required,min=1" label:"商品ID"`
 }
+
+//
+// GoodsBatchRequest
+//  @Description: 批量获得商品信息
+//
+type GoodsBatchRequest struct {
+	GoodsBatchID []GoodsIDRequest `json:"goods_batch_id" validate:"required" label:"批量查询ID"`
+}

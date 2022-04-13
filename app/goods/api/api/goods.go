@@ -153,5 +153,26 @@ func DeleteGoods(ctx *gin.Context) {
 //  @param ctx
 //
 func GetBatchGoods(ctx *gin.Context) {
-	// todo
+	arg := request.GoodsBatchRequest{}
+	_ = ctx.ShouldBindJSON(&arg)
+	msg, err := validate.Validate(&arg, global.Validate, global.Trans)
+	if err != nil {
+		model.FailWithMsg(msg, ctx)
+		return
+	}
+
+	in := proto.ManyGoodsID{
+		GoodsIDs: make([]*proto.GoodID, 0),
+	}
+	for _, idRequest := range arg.GoodsBatchID {
+		goodId := proto.GoodID{Id: idRequest.ID}
+		in.GoodsIDs = append(in.GoodsIDs, &goodId)
+	}
+	goodsInfos, err := global.GoodsSrvClient.GetGoodsBatchInfo(ctx, &in)
+	if err != nil {
+		global.Logger.Error("批量获得商品信息失败", zap.Error(err))
+		handle_grpc_error.HandleGrpcErrorToHttp(err, ctx)
+		return
+	}
+	model.OkWithData(goodsInfos, ctx)
 }
