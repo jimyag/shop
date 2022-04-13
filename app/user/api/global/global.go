@@ -7,9 +7,9 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/jimyag/shop/app/user/api/config"
-	"github.com/jimyag/shop/app/user/api/tools/paseto"
 	"github.com/jimyag/shop/common/model"
 	"github.com/jimyag/shop/common/proto"
+	"github.com/jimyag/shop/common/utils/paseto"
 )
 
 var (

@@ -8,7 +8,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/jimyag/shop/app/user/api/global"
-	"github.com/jimyag/shop/app/user/api/tools/paseto"
+	"github.com/jimyag/shop/common/utils/paseto"
 )
 
 //

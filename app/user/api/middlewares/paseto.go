@@ -7,8 +7,8 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/jimyag/shop/app/user/api/global"
-	"github.com/jimyag/shop/app/user/api/tools/paseto"
 	"github.com/jimyag/shop/common/model"
+	"github.com/jimyag/shop/common/utils/paseto"
 )
 
 func Paseto() gin.HandlerFunc {

@@ -14,10 +14,10 @@ import (
 	"github.com/jimyag/shop/app/user/api/model/response"
 	"github.com/jimyag/shop/app/user/api/tools/auth_code"
 	"github.com/jimyag/shop/app/user/api/tools/email"
-	"github.com/jimyag/shop/app/user/api/tools/paseto"
 	"github.com/jimyag/shop/common/model"
 	"github.com/jimyag/shop/common/proto"
 	"github.com/jimyag/shop/common/utils/handle_grpc_error"
+	"github.com/jimyag/shop/common/utils/paseto"
 	"github.com/jimyag/shop/common/utils/validate"
 )
 
