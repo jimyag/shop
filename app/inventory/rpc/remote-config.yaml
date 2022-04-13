@@ -1,0 +1,20 @@
+postgres:
+  host: "localhost"
+  port: 35433
+  database: "shop"
+  user: "postgres"
+  password: "postgres"
+  type: "postgres"
+
+service-info:
+  host: "192.168.0.2"
+  port: 50053
+  name: "inventory-rpc"
+
+consul-info:
+  host: "192.168.0.2"
+  port: 8500
+
+jaeger-info:
+  host: "192.168.0.2"
+  port: 6831
