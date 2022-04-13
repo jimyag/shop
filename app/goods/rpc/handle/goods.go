@@ -90,7 +90,7 @@ func (server *GoodsServer) UpdateGoods(ctx context.Context, req *proto.GoodsInfo
 
 	arg := model.UpdateGoodsParams{
 		UpdatedAt: time.Now(),
-		Name:      goods.Name,
+		Name:      req.Name,
 		Price:     float64(req.Price),
 		ID:        int64(req.Id),
 	}
