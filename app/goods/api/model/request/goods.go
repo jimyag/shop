@@ -18,3 +18,11 @@ type UpdateGoods struct {
 	Name  string  `json:"name" validate:"required" label:"商品名称"`
 	Price float32 `json:"price" validate:"required,min=0.1" label:"商品价格"`
 }
+
+//
+// GetGoodsInfo
+//  @Description: 获得商品信息
+//
+type GetGoodsInfo struct {
+	ID int32 `json:"id" validate:"required,min=1" label:"商品ID"`
+}

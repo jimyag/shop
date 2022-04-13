@@ -95,7 +95,21 @@ func UpdateGoodsInfo(ctx *gin.Context) {
 //  @param ctx
 //
 func GetGoods(ctx *gin.Context) {
-	// todo
+	arg := request.GetGoodsInfo{}
+	_ = ctx.ShouldBindJSON(&arg)
+	msg, err := validate.Validate(&arg, global.Validate, global.Trans)
+	if err != nil {
+		model.FailWithMsg(msg, ctx)
+		return
+	}
+
+	goodsInfo, err := global.GoodsSrvClient.GetGoods(ctx, &proto.GoodID{Id: arg.ID})
+	if err != nil {
+		global.Logger.Error("获得商品信息失败", zap.Error(err))
+		handle_grpc_error.HandleGrpcErrorToHttp(err, ctx)
+		return
+	}
+	model.OkWithData(goodsInfo, ctx)
 }
 
 //
