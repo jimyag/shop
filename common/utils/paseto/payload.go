@@ -3,6 +3,8 @@ package paseto
 import (
 	"errors"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 // 验证token时返回的错误
@@ -49,4 +51,20 @@ func (payload *Payload) Valid() error {
 		return ErrExpiredToken
 	}
 	return nil
+}
+
+//
+// GetPayloadFormCtx
+//  @Description: 从ctx中拿到payload
+//
+func GetPayloadFormCtx(ctx *gin.Context) (*Payload, error) {
+	value, exists := ctx.Get("payload")
+	if !exists {
+		return nil, errors.New("payload不存在")
+	}
+	payload, exists := value.(*Payload)
+	if !exists {
+		return nil, errors.New("无效参数")
+	}
+	return payload, nil
 }
