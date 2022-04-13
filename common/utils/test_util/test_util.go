@@ -101,3 +101,18 @@ func RandomGender() string {
 	n := len(gender)
 	return gender[rand.Intn(n)]
 }
+
+//
+// RandomFloat
+//  @Description: 求指定范围的随机
+//  @param min
+//  @param max
+//  @return float32
+//
+func RandomFloat(min, max float32) float32 {
+	return min + rand.Float32()*max - (max - min)
+}
+
+func RandomPrice() float32 {
+	return RandomFloat(10.0, 2000.0)
+}
