@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/anaskhan96/go-password-encoder"
+	"github.com/opentracing/opentracing-go"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -100,10 +101,21 @@ func (u *UserServer) GetUserList(ctx context.Context, req *proto.PageIngo) (*pro
 //  @return error
 //
 func (u *UserServer) GetUserByEmail(ctx context.Context, req *proto.EmailRequest) (*proto.UserInfoResponse, error) {
+	// 开始追踪
+	// 从context总拿到parentSpan
+	parentSpan := opentracing.SpanFromContext(ctx)
+	// 生成一个span并设置它的父亲
+	getUserInfoByEmailSpan := opentracing.GlobalTracer().
+		StartSpan(
+			"get user info by email form database",
+			opentracing.ChildOf(parentSpan.Context()),
+		)
 	user, err := u.Store.GetUserByEmail(ctx, req.GetEmail())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "通过 Email 获得用户信息失败")
 	}
+	getUserInfoByEmailSpan.Finish()
+
 	rsp := userModel2UserInfoResponse(user)
 	return rsp, nil
 }
@@ -233,7 +245,19 @@ func (u *UserServer) UpdateUser(ctx context.Context, req *proto.UpdateUserReques
 //  @return error
 //
 func (u *UserServer) CheckPassword(ctx context.Context, req *proto.PasswordCheckInfo) (*proto.CheckPasswordResponse, error) {
+	// 开始追踪
+	// 从context总拿到parentSpan
+	parentSpan := opentracing.SpanFromContext(ctx)
+	// 生成一个span并设置它的父亲
+	checkUserPassword := opentracing.GlobalTracer().
+		StartSpan(
+			"check user password",
+			opentracing.ChildOf(parentSpan.Context()),
+		)
+
 	encryptedPasswordInfo := strings.Split(req.GetEncryptedPassword(), "$")
 	check := password.Verify(req.Password, encryptedPasswordInfo[2], encryptedPasswordInfo[3], u.options)
+
+	checkUserPassword.Finish()
 	return &proto.CheckPasswordResponse{Success: check}, nil
 }
