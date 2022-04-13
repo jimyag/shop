@@ -9,6 +9,7 @@ import (
 
 func UserRouter(router *gin.RouterGroup) {
 	baseRouter := router.Group("")
+	baseRouter.Use(middlewares.Tracing())
 	publicRouter := baseRouter.Group("user")
 	{
 		// 使用邮箱和密码登录

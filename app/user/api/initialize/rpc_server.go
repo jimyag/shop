@@ -4,11 +4,13 @@ import (
 	"fmt"
 
 	_ "github.com/mbobakov/grpc-consul-resolver"
+	"github.com/opentracing/opentracing-go"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 
 	"github.com/jimyag/shop/app/user/api/global"
 	"github.com/jimyag/shop/common/proto"
+	"github.com/jimyag/shop/common/utils/otgrpc"
 )
 
 //
@@ -33,6 +35,11 @@ func initUserClient() {
 		),
 		grpc.WithInsecure(),
 		grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy": "round_robin"}`),
+		grpc.WithUnaryInterceptor(
+			otgrpc.OpenTracingClientInterceptor(
+				opentracing.GlobalTracer(),
+			),
+		),
 	)
 
 	if err != nil {
