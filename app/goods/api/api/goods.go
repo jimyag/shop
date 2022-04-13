@@ -95,7 +95,7 @@ func UpdateGoodsInfo(ctx *gin.Context) {
 //  @param ctx
 //
 func GetGoods(ctx *gin.Context) {
-	arg := request.GetGoodsInfo{}
+	arg := request.GoodsIDRequest{}
 	_ = ctx.ShouldBindJSON(&arg)
 	msg, err := validate.Validate(&arg, global.Validate, global.Trans)
 	if err != nil {
@@ -115,11 +115,36 @@ func GetGoods(ctx *gin.Context) {
 //
 // DeleteGoods
 //  @Description: 删除商品
-// todo 只能是管理员删除
 //  @param ctx
 //
 func DeleteGoods(ctx *gin.Context) {
-	//	todo
+	payload, err := paseto.GetPayloadFormCtx(ctx)
+	if err != nil {
+		model.FailWithMsg("权限不足", ctx)
+		return
+	}
+
+	if payload.Role == 1 {
+		model.FailWithMsg("权限不足", ctx)
+		return
+	}
+
+	goodsID := request.GoodsIDRequest{}
+	_ = ctx.ShouldBindJSON(&goodsID)
+
+	msg, err := validate.Validate(goodsID, global.Validate, global.Trans)
+	if err != nil {
+		model.FailWithMsg(msg, ctx)
+		return
+	}
+
+	_, err = global.GoodsSrvClient.DeleteGoods(ctx, &proto.GoodsInfo{Id: goodsID.ID})
+	if err != nil {
+		global.Logger.Error("删除商品信息失败", zap.Error(err))
+		handle_grpc_error.HandleGrpcErrorToHttp(err, ctx)
+		return
+	}
+	model.OkWithMsg("成功删除商品", ctx)
 }
 
 //

@@ -20,9 +20,9 @@ type UpdateGoods struct {
 }
 
 //
-// GetGoodsInfo
+// GoodsIDRequest
 //  @Description: 获得商品信息
 //
-type GetGoodsInfo struct {
+type GoodsIDRequest struct {
 	ID int32 `json:"id" validate:"required,min=1" label:"商品ID"`
 }
