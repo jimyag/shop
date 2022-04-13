@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	"github.com/anaskhan96/go-password-encoder"
+	"github.com/opentracing/opentracing-go"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
@@ -19,6 +20,7 @@ import (
 	"github.com/jimyag/shop/app/user/rpc/initialize"
 	"github.com/jimyag/shop/app/user/rpc/model"
 	"github.com/jimyag/shop/common/proto"
+	"github.com/jimyag/shop/common/utils/otgrpc"
 	port2 "github.com/jimyag/shop/common/utils/port"
 	"github.com/jimyag/shop/common/utils/register/consul"
 	uuid2 "github.com/jimyag/shop/common/utils/uuid"
@@ -37,8 +39,20 @@ func main() {
 	// 初始化 database
 	initialize.InitDataBase()
 
+	// 初始化jaeger
+	tracer, cl, err := initialize.InitJaeger()
+	if err != nil {
+		global.Logger.Fatal("初始化jaeger失败", zap.Error(err))
+	}
+	opentracing.SetGlobalTracer(tracer)
+
 	// grpc 的server
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(
+			otgrpc.OpenTracingServerInterceptor(tracer),
+		),
+	)
+
 	// 数据库的连接
 	sqlStore := model.NewSQLStore(global.DB)
 	// 验证密码的设置
@@ -126,5 +140,7 @@ func main() {
 	if err = registerClient.DeRegister(serviceID.String()); err != nil {
 		global.Logger.Info("服务注销失败", zap.String("serviceID", serviceID.String()))
 	}
+	cl.Close()
+
 	global.Logger.Info("服务已注销", zap.String("serviceID", serviceID.String()))
 }
