@@ -28,7 +28,14 @@ func LocalConfigToRemoteConfig(consulAddress, debugPath, releasePath, filename s
 		Key:   debugPath,
 		Value: value,
 	}
-	consulClient.KV().Put(&kp, nil)
+	_, err = consulClient.KV().Put(&kp, nil)
+	if err != nil {
+		log.Fatalln("上传 debug 配置文件失败", err)
+	}
 	kp.Key = releasePath
-	consulClient.KV().Put(&kp, nil)
+	_, err = consulClient.KV().Put(&kp, nil)
+	if err != nil {
+		log.Fatalln("上传 release 配置文件失败", err)
+	}
+
 }
