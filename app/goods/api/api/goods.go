@@ -16,7 +16,6 @@ import (
 //
 // CreateGoods
 //  @Description: 创建商品
-//  todo   只能是管理员创建 ,目前是谁都可以创建
 //  @param ctx
 //
 func CreateGoods(ctx *gin.Context) {
@@ -54,11 +53,40 @@ func CreateGoods(ctx *gin.Context) {
 //
 // UpdateGoodsInfo
 //  @Description: 更新商品的信息
-// todo 只能是管理员更新
 //  @param ctx
 //
 func UpdateGoodsInfo(ctx *gin.Context) {
-	// todo
+	payload, err := paseto.GetPayloadFormCtx(ctx)
+	if err != nil {
+		model.FailWithMsg("权限不足", ctx)
+		return
+	}
+
+	if payload.Role == 1 {
+		model.FailWithMsg("权限不足", ctx)
+		return
+	}
+
+	arg := request.UpdateGoods{}
+	_ = ctx.ShouldBindJSON(&arg)
+	msg, err := validate.Validate(&arg, global.Validate, global.Trans)
+	if err != nil {
+		model.FailWithMsg(msg, ctx)
+		return
+	}
+
+	in := proto.GoodsInfo{
+		Id:    arg.ID,
+		Name:  arg.Name,
+		Price: arg.Price,
+	}
+	goodsInfo, err := global.GoodsSrvClient.UpdateGoods(ctx, &in)
+	if err != nil {
+		global.Logger.Error("更新商品信息失败", zap.Error(err))
+		handle_grpc_error.HandleGrpcErrorToHttp(err, ctx)
+		return
+	}
+	model.OkWithData(goodsInfo, ctx)
 }
 
 //
