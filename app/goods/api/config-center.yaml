@@ -1,0 +1,8 @@
+host: "localhost"
+port: 8500
+release-path: "shop/goods/api/release.yaml"
+debug-path: "shop/goods/api/debug.yaml"
+file-type: "yaml"
+type: "consul"
+env-name: "shop_debug"
+
