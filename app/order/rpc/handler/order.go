@@ -134,12 +134,27 @@ func (server *OrderServer) CreateCartItem(ctx context.Context, req *proto.Create
 //  @return error
 //
 func (server *OrderServer) DeleteCartItems(ctx context.Context, req *proto.DeleteCartItemsRequest) (*proto.Empty, error) {
+	// 查询是否存在
+	getCartDetailByUIDAndGoodsIDParams := model.GetCartDetailByUIDAndGoodsIDParams{
+		GoodsID: req.GoodsID,
+		UserID:  req.UserID,
+	}
+	_, err := server.Store.GetCartDetailByUIDAndGoodsID(ctx, getCartDetailByUIDAndGoodsIDParams)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return &proto.Empty{}, status.Error(codes.NotFound, "此条记录不存在")
+		}
+
+		global.Logger.Error("获得购物车记录失败", zap.Error(err))
+		return &proto.Empty{}, status.Error(codes.Internal, "未知错误")
+
+	}
 	arg := model.DeleteCartItemParams{
 		DeletedAt: sql.NullTime{Time: time.Now(), Valid: true},
 		UserID:    req.UserID,
 		GoodsID:   req.GoodsID,
 	}
-	_, err := server.Store.DeleteCartItem(ctx, arg)
+	_, err = server.Store.DeleteCartItem(ctx, arg)
 	if err == sql.ErrNoRows {
 		return &proto.Empty{}, status.Error(codes.NotFound, "没有该条记录")
 	} else if err != nil {
