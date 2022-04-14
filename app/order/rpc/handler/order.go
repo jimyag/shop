@@ -265,15 +265,26 @@ func (server *OrderServer) GetOrderList(ctx context.Context, req *proto.GetOrder
 
 	return &response, nil
 }
-func (server *OrderServer) GetOrderDetail(ctx context.Context, req *proto.GetOrderDetailRequest) (*proto.OrderInfo, error) {
-	orderInfo, err := server.Store.GetOrderDetail(ctx, model.GetOrderDetailParams{UserID: req.UserID, OrderID: req.OrderID})
+
+//
+// GetOrderDetail
+//  @Description: 获得订单详情
+//  @receiver server
+//  @param ctx
+//  @param req
+//  @return *proto.OrderInfo
+//  @return error
+//
+func (server *OrderServer) GetOrderDetail(ctx context.Context, req *proto.GetOrderDetailRequest) (*proto.OrderDetailResponse, error) {
+	// 获得订单信息
+	orderInfo, err := server.Store.GetOrderDetail(ctx, model.GetOrderDetailParams{OrderID: req.OrderID})
 	if err == sql.ErrNoRows {
-		return &proto.OrderInfo{}, status.Error(codes.NotFound, "没有找到该订单")
+		return &proto.OrderDetailResponse{}, status.Error(codes.NotFound, "没有找到该订单")
 	} else if err != nil {
 		global.Logger.Error(err.Error())
-		return &proto.OrderInfo{}, status.Error(codes.Internal, "内部错误")
+		return &proto.OrderDetailResponse{}, status.Error(codes.Internal, "内部错误")
 	}
-	response := proto.OrderInfo{
+	OrderInfo := proto.OrderInfo{
 		Id:      int32(orderInfo.ID),
 		UserID:  orderInfo.UserID,
 		OrderID: orderInfo.OrderID,
@@ -285,6 +296,28 @@ func (server *OrderServer) GetOrderDetail(ctx context.Context, req *proto.GetOrd
 		Name:    orderInfo.SignerName,
 		Mobile:  orderInfo.SignerMobile,
 	}
+	response := proto.OrderDetailResponse{
+		OrderInfo: &OrderInfo,
+	}
+	// 获得订单中包含的商品信息
+	orderGoods, err := server.Store.GetOrderListByOrderID(ctx, orderInfo.OrderID)
+	if err != nil {
+		global.Logger.Error(err.Error())
+		return &proto.OrderDetailResponse{}, status.Error(codes.Internal, "内部错误")
+	}
+	rspOrderGoods := make([]*proto.OrderGoods, 0)
+	for _, good := range orderGoods {
+		OrderGoods := proto.OrderGoods{
+			Id:         int32(good.ID),
+			OrderID:    good.OrderID,
+			GoodsID:    good.GoodsID,
+			GoodsName:  good.GoodsName,
+			GoodsPrice: float32(good.GoodsPrice),
+			GoodsNum:   good.Nums,
+		}
+		rspOrderGoods = append(rspOrderGoods, &OrderGoods)
+	}
+	response.Goods = rspOrderGoods
 	return &response, nil
 }
 func (server *OrderServer) UpdateOrderStatus(ctx context.Context, req *proto.OrderInfo) (*proto.OrderInfo, error) {
