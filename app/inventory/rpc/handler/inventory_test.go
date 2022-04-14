@@ -83,8 +83,8 @@ func TestSell(t *testing.T) {
 }
 
 func TestInventoryServer_Sell(t *testing.T) {
-
-	n := 100
+	t.Parallel()
+	n := 90
 	var wg sync.WaitGroup
 	wg.Add(n)
 	for i := 0; i < n; i++ {
@@ -92,7 +92,7 @@ func TestInventoryServer_Sell(t *testing.T) {
 			ins := proto.SellInfo{
 				GoodsInfo: []*proto.GoodInvInfo{
 					{
-						GoodsId: 1,
+						GoodsId: 2,
 						Num:     1,
 					},
 				},
@@ -138,4 +138,38 @@ func TestRollBack(t *testing.T) {
 	}
 	_, err = inventoryClient.Rollback(context.Background(), &in)
 	require.Error(t, err)
+}
+
+func TestAddGoodsInventory(t *testing.T) {
+	in := proto.GoodInvInfo{
+		GoodsId: 2,
+		Num:     9000,
+	}
+	inventory, err := inventoryClient.SetInv(context.Background(), &in)
+	require.NoError(t, err)
+	require.NotNil(t, inventory)
+
+	in = proto.GoodInvInfo{
+		GoodsId: 3,
+		Num:     9000,
+	}
+	inventory, err = inventoryClient.SetInv(context.Background(), &in)
+	require.NoError(t, err)
+	require.NotNil(t, inventory)
+
+	in = proto.GoodInvInfo{
+		GoodsId: 4,
+		Num:     9000,
+	}
+	inventory, err = inventoryClient.SetInv(context.Background(), &in)
+	require.NoError(t, err)
+	require.NotNil(t, inventory)
+
+	in = proto.GoodInvInfo{
+		GoodsId: 5,
+		Num:     9000,
+	}
+	inventory, err = inventoryClient.SetInv(context.Background(), &in)
+	require.NoError(t, err)
+	require.NotNil(t, inventory)
 }
