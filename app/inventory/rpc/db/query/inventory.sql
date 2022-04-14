@@ -8,7 +8,7 @@ returning *;
 -- name: GetInventoryByGoodsID :one
 SELECT *
 FROM "inventory"
-WHERE goods = $1
+WHERE goods_id = $1
 LIMIT 1;
 
 
