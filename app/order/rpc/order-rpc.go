@@ -37,6 +37,9 @@ func main() {
 	// 初始化 database
 	initialize.InitDataBase()
 
+	// 初始化第三方服务
+	initialize.InitGrpcClient()
+
 	tracer, cl, err := initialize.InitJaeger()
 	if err != nil {
 		global.Logger.Fatal("创建 tracer 失败", zap.Error(err))
