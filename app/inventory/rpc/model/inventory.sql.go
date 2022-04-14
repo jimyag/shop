@@ -9,28 +9,28 @@ import (
 )
 
 const createInventory = `-- name: CreateInventory :one
-INSERT INTO "inventory"(goods,
+INSERT INTO "inventory"(goods_id,
                         sticks,
                         version)
 VALUES ($1, $2, $3)
-returning id, created_at, updated_at, deleted_at, goods, sticks, version
+returning id, created_at, updated_at, deleted_at, goods_id, sticks, version
 `
 
 type CreateInventoryParams struct {
-	Goods   int32 `json:"goods"`
+	GoodsID int32 `json:"goods_id"`
 	Sticks  int32 `json:"sticks"`
 	Version int32 `json:"version"`
 }
 
 func (q *Queries) CreateInventory(ctx context.Context, arg CreateInventoryParams) (Inventory, error) {
-	row := q.db.QueryRowContext(ctx, createInventory, arg.Goods, arg.Sticks, arg.Version)
+	row := q.db.QueryRowContext(ctx, createInventory, arg.GoodsID, arg.Sticks, arg.Version)
 	var i Inventory
 	err := row.Scan(
 		&i.ID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
-		&i.Goods,
+		&i.GoodsID,
 		&i.Sticks,
 		&i.Version,
 	)
@@ -38,21 +38,21 @@ func (q *Queries) CreateInventory(ctx context.Context, arg CreateInventoryParams
 }
 
 const getInventoryByGoodsID = `-- name: GetInventoryByGoodsID :one
-SELECT id, created_at, updated_at, deleted_at, goods, sticks, version
+SELECT id, created_at, updated_at, deleted_at, goods_id, sticks, version
 FROM "inventory"
-WHERE goods = $1
+WHERE goods_id = $1
 LIMIT 1
 `
 
-func (q *Queries) GetInventoryByGoodsID(ctx context.Context, goods int32) (Inventory, error) {
-	row := q.db.QueryRowContext(ctx, getInventoryByGoodsID, goods)
+func (q *Queries) GetInventoryByGoodsID(ctx context.Context, goodsID int32) (Inventory, error) {
+	row := q.db.QueryRowContext(ctx, getInventoryByGoodsID, goodsID)
 	var i Inventory
 	err := row.Scan(
 		&i.ID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
-		&i.Goods,
+		&i.GoodsID,
 		&i.Sticks,
 		&i.Version,
 	)
@@ -63,25 +63,25 @@ const updateInventory = `-- name: UpdateInventory :one
 update "inventory"
 set updated_at = $1,
     sticks     = sticks + $3
-where goods = $2
-returning id, created_at, updated_at, deleted_at, goods, sticks, version
+where goods_id = $2
+returning id, created_at, updated_at, deleted_at, goods_id, sticks, version
 `
 
 type UpdateInventoryParams struct {
 	UpdatedAt time.Time `json:"updated_at"`
-	Goods     int32     `json:"goods"`
+	GoodsID   int32     `json:"goods_id"`
 	Counts    int32     `json:"counts"`
 }
 
 func (q *Queries) UpdateInventory(ctx context.Context, arg UpdateInventoryParams) (Inventory, error) {
-	row := q.db.QueryRowContext(ctx, updateInventory, arg.UpdatedAt, arg.Goods, arg.Counts)
+	row := q.db.QueryRowContext(ctx, updateInventory, arg.UpdatedAt, arg.GoodsID, arg.Counts)
 	var i Inventory
 	err := row.Scan(
 		&i.ID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
-		&i.Goods,
+		&i.GoodsID,
 		&i.Sticks,
 		&i.Version,
 	)
