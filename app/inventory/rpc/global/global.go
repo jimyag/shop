@@ -3,9 +3,10 @@ package global
 import (
 	"database/sql"
 
+	"github.com/go-redsync/redsync/v4"
 	"go.uber.org/zap"
 
-	remoteConfig "github.com/jimyag/shop/app/goods/rpc/config"
+	remoteConfig "github.com/jimyag/shop/app/inventory/rpc/config"
 	"github.com/jimyag/shop/common/model"
 )
 
@@ -14,4 +15,5 @@ var (
 	RemoteConfig *remoteConfig.ALLConfig //远程配置中心里面的配置
 	ConfigCenter *model.ConfigCenterInfo //配置中心的位置信息
 	DB           *sql.DB                 // database
+	RedSync      *redsync.Redsync        // 分布式锁
 )
