@@ -32,9 +32,19 @@ type JaegerConfig struct {
 	Port int    `mapstructure:"port"`
 }
 
+//
+// RedSync
+//  @Description: 分布式锁的redis的配置
+//
+type RedSync struct {
+	Host string `mapstructure:"host"`
+	Port int    `mapstructure:"port"`
+}
+
 // ALLConfig 需要用的远程配置文件
 type ALLConfig struct {
 	Postgres    Postgres     `mapstructure:"postgres"`
 	ServiceInfo ServiceInfo  `mapstructure:"service-info"`
 	JaegerInfo  JaegerConfig `mapstructure:"jaeger-info"`
+	RedSync     RedSync      `mapstructure:"red-sync"`
 }
