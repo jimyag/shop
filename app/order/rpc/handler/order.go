@@ -6,6 +6,7 @@ import (
 	"errors"
 	"time"
 
+	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -64,8 +65,51 @@ func (server *OrderServer) CartItemList(ctx context.Context, req *proto.CartItem
 	response.Data = cartResponse
 	return &response, nil
 }
+
+//
+// CreateCartItem
+//  @Description: 将商品添加到购物车， 有两种 原本没有这件商品，这个商品添加了合并
+//  @receiver server
+//  @param ctx
+//  @param req
+//  @return *proto.ShopCartInfoResponse
+//  @return error
+//
 func (server *OrderServer) CreateCartItem(ctx context.Context, req *proto.CreateCartItemRequest) (*proto.ShopCartInfoResponse, error) {
-	cartInfo, err := server.Store.CreateCart(ctx, model.CreateCartParams{UserID: req.UserID, GoodsID: req.GoodsID, Nums: req.Nums})
+	// 查询是否有了
+	getCartDetailByUIDAndGoodsIDParams := model.GetCartDetailByUIDAndGoodsIDParams{
+		GoodsID: req.GoodsID,
+		UserID:  req.UserID,
+	}
+	shoppingCart, err := server.Store.GetCartDetailByUIDAndGoodsID(ctx, getCartDetailByUIDAndGoodsIDParams)
+	if err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			global.Logger.Error("查询购物车失败", zap.Error(err))
+			return &proto.ShopCartInfoResponse{}, status.Error(codes.Internal, "内部错误")
+		}
+		// 没有的话就新建
+		cartInfo, err := server.Store.CreateCart(ctx, model.CreateCartParams{UserID: req.UserID, GoodsID: req.GoodsID, Nums: req.Nums})
+		if err != nil {
+			global.Logger.Error("创建购物车记录失败", zap.Error(err))
+			return &proto.ShopCartInfoResponse{}, status.Error(codes.Internal, "未知错误")
+		}
+		resp := proto.ShopCartInfoResponse{
+			Id:      int32(cartInfo.ID),
+			UserID:  cartInfo.UserID,
+			GoodsID: cartInfo.GoodsID,
+			Nums:    cartInfo.Nums,
+		}
+		return &resp, nil
+	}
+
+	// 如果已经有了就把数量加上去
+	cartInfo, err := server.Store.UpdateCartItem(ctx, model.UpdateCartItemParams{
+		UpdatedAt: time.Now(),
+		Nums:      shoppingCart.Nums + req.Nums,
+		Checked:   req.Checked,
+		UserID:    req.UserID,
+		GoodsID:   req.GoodsID,
+	})
 	if err != nil {
 		global.Logger.Error(err.Error())
 		return &proto.ShopCartInfoResponse{}, status.Error(codes.Internal, "未知错误")
@@ -75,6 +119,7 @@ func (server *OrderServer) CreateCartItem(ctx context.Context, req *proto.Create
 		UserID:  cartInfo.UserID,
 		GoodsID: cartInfo.GoodsID,
 		Nums:    cartInfo.Nums,
+		Checked: cartInfo.Checked,
 	}
 	return &resp, nil
 }
