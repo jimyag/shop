@@ -1,7 +1,7 @@
 host: "192.168.0.2"
 port: 8500
-release-path: "shop/inventory/srv/release.yaml"
-debug-path: "shop/inventory/srv/debug.yaml"
+release-path: "shop/inventory/rpc/release.yaml"
+debug-path: "shop/inventory/rpc/debug.yaml"
 file-type: "yaml"
 type: "consul"
 env-name: "shop_debug"
