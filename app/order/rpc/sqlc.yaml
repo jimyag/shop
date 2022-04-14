@@ -1,0 +1,11 @@
+version: 1
+packages:
+  - path: "./model" # 生成go 代码的位置
+    name: "model"  # 生成 go package 的名字
+    engine: "postgresql" # 使用的数据库引擎
+    schema: "./db/migration/" # 迁移表的sql语句 我们使用migrate中的up文件
+    queries: "./db/query" # CRUD的sql
+    emit_json_tags: true  # 添加json在生成的struct中
+    emit_prepared_queries: false
+    emit_interface: true # 生成接口
+    emit_exact_table_names: false # 表名是否带s
