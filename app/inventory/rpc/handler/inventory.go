@@ -4,8 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
+	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -112,6 +114,14 @@ func (i *InventoryServer) Sell(ctx context.Context, req *proto.SellInfo) (*proto
 	// 拿到所有的商品，
 	err := i.ExecTx(ctx, func(queries *model.Queries) error {
 		for _, info := range req.GoodsInfo {
+
+			// 分布式锁
+			mutex := global.RedSync.NewMutex(fmt.Sprintf("goods_%d", info.GoodsId))
+			if err := mutex.Lock(); err != nil {
+				global.Logger.Error("", zap.Error(err))
+				return status.Error(codes.Internal, "内部错误-获取分布式锁失败")
+			}
+
 			//判断是否有库存
 			inventory, err := queries.GetInventoryByGoodsID(ctx, info.GoodsId)
 			if err != nil {
@@ -133,6 +143,10 @@ func (i *InventoryServer) Sell(ctx context.Context, req *proto.SellInfo) (*proto
 			})
 			if err != nil {
 				return err
+			}
+
+			if ok, err := mutex.Unlock(); !ok || err != nil {
+				return status.Error(codes.Internal, "内部错误-释放分布式锁失败")
 			}
 		}
 		return nil
