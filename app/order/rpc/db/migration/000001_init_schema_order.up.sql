@@ -19,7 +19,7 @@ CREATE TABLE "order_info"
     "user_id"       integer        NOT NULL,
     "order_id"      integer UNIQUE NOT NULL,
     "pay_type"      varchar,
-    "status"        int8           NOT NULL,
+    "status"        int8           NOT NULL, -- 1 待支付 2 成功 3 超时关闭
     "trade_id"      varchar, --支付编号
     "order_mount"   float,   -- 订单金额
     "pay_time"      timestamptz,

@@ -140,7 +140,7 @@ const deleteCartItem = `-- name: DeleteCartItem :one
 UPDATE "shopping_cart"
 set deleted_at =$1
 where user_id = $2
-  and goods_id = $3
+  and goods_id = $3 and deleted_at IS  NULL
 returning id, created_at, updated_at, deleted_at, user_id, goods_id, nums, checked
 `
 
@@ -170,7 +170,7 @@ const getCartDetailByUIDAndGoodsID = `-- name: GetCartDetailByUIDAndGoodsID :one
 SELECT id, created_at, updated_at, deleted_at, user_id, goods_id, nums, checked
 FROM "shopping_cart"
 where user_id = $1
-  and goods_id = $2 and deleted_at IS NOT NULL
+  and goods_id = $2 and deleted_at IS  NULL
 `
 
 type GetCartDetailByUIDAndGoodsIDParams struct {
@@ -198,7 +198,7 @@ const getCartListByUid = `-- name: GetCartListByUid :many
 SELECT id, created_at, updated_at, deleted_at, user_id, goods_id, nums, checked
 FROM "shopping_cart"
 WHERE user_id = $1
-  and deleted_at IS NOT NULL
+  and deleted_at IS  NULL
 `
 
 func (q *Queries) GetCartListByUid(ctx context.Context, userID int32) ([]ShoppingCart, error) {
@@ -238,7 +238,7 @@ SELECT id, created_at, updated_at, deleted_at, user_id, goods_id, nums, checked
 FROM "shopping_cart"
 WHERE user_id = $1 
   and checked = $2 
-  and deleted_at IS NOT NULL
+  and deleted_at IS  NULL
 `
 
 type GetCartListCheckedParams struct {
@@ -282,7 +282,7 @@ const getOrderDetail = `-- name: GetOrderDetail :one
 SELECT id, created_at, updated_at, deleted_at, user_id, order_id, pay_type, status, trade_id, order_mount, pay_time, address, signer_name, signer_mobile, post
 FROM "order_info"
 WHERE user_id = $1
-  and order_id = $2 and deleted_at IS NOT NULL
+  and order_id = $2 and deleted_at IS  NULL
 LIMIT 1
 `
 
@@ -317,7 +317,7 @@ func (q *Queries) GetOrderDetail(ctx context.Context, arg GetOrderDetailParams) 
 const getOrderList = `-- name: GetOrderList :many
 SELECT id, created_at, updated_at, deleted_at, user_id, order_id, pay_type, status, trade_id, order_mount, pay_time, address, signer_name, signer_mobile, post
 FROM "order_info"
-WHERE user_id = $1 and deleted_at IS NOT NULL
+WHERE user_id = $1 and deleted_at IS  NULL
 limit $2 offset $3
 `
 
@@ -370,7 +370,7 @@ const getOrderListByOrderID = `-- name: GetOrderListByOrderID :many
 SELECT id, created_at, updated_at, deleted_at, order_id, goods_id, goods_name, goods_price, nums
 FROM order_goods
 WHERE order_id = $1
-  and deleted_at IS NOT NULL
+  and deleted_at IS  NULL
 `
 
 func (q *Queries) GetOrderListByOrderID(ctx context.Context, orderID int32) ([]OrderGood, error) {
@@ -412,7 +412,7 @@ SET updated_at = $1,
     nums       = $2,
     checked    = $3
 WHERE user_id = $4
-  and goods_id = $5
+  and goods_id = $5 and deleted_at IS  NULL
 returning id, created_at, updated_at, deleted_at, user_id, goods_id, nums, checked
 `
 
@@ -452,7 +452,7 @@ set updated_at = $1,
     pay_type   = $2,
     pay_time   = $3,
     status     = $4
-where order_id = $5
+where order_id = $5 and deleted_at IS  NULL
 returning id, created_at, updated_at, deleted_at, user_id, order_id, pay_type, status, trade_id, order_mount, pay_time, address, signer_name, signer_mobile, post
 `
 

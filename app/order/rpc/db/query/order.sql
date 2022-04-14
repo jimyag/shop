@@ -14,7 +14,7 @@ returning *;
 UPDATE "shopping_cart"
 set deleted_at =$1
 where user_id = $2
-  and goods_id = $3
+  and goods_id = $3 and deleted_at IS  NULL
 returning *;
 
 -- name: UpdateCartItem :one
@@ -23,7 +23,7 @@ SET updated_at = $1,
     nums       = $2,
     checked    = $3
 WHERE user_id = $4
-  and goods_id = $5
+  and goods_id = $5 and deleted_at IS  NULL
 returning *;
 
 
@@ -73,7 +73,7 @@ set updated_at = $1,
     pay_type   = $2,
     pay_time   = $3,
     status     = $4
-where order_id = $5
+where order_id = $5 and deleted_at IS  NULL
 returning *;
 
 
