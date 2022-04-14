@@ -124,7 +124,15 @@ func (server *OrderServer) CreateCartItem(ctx context.Context, req *proto.Create
 	return &resp, nil
 }
 
-// DeleteCartItems 删除购物车中的某条信息
+//
+// DeleteCartItems
+//  @Description: 删除购物车中的某条信息
+//  @receiver server
+//  @param ctx
+//  @param req
+//  @return *proto.Empty
+//  @return error
+//
 func (server *OrderServer) DeleteCartItems(ctx context.Context, req *proto.DeleteCartItemsRequest) (*proto.Empty, error) {
 	arg := model.DeleteCartItemParams{
 		DeletedAt: sql.NullTime{Time: time.Now(), Valid: true},
@@ -141,13 +149,22 @@ func (server *OrderServer) DeleteCartItems(ctx context.Context, req *proto.Delet
 	return &proto.Empty{}, nil
 }
 
+//
+// UpdateCartItem
+//  @Description: 更新购物车记录，更新数量和选中状态
+//  @receiver server
+//  @param ctx
+//  @param req
+//  @return *proto.Empty
+//  @return error
+//
 func (server *OrderServer) UpdateCartItem(ctx context.Context, req *proto.UpdateCartItemRequest) (*proto.Empty, error) {
 	cartDetail := model.GetCartDetailByUIDAndGoodsIDParams{
 		UserID:  req.UserID,
 		GoodsID: req.GoodsID,
 	}
 	// 拿到之前的条目信息
-	oldCart, err := server.Store.GetCartDetailByUIDAndGoodsID(ctx, cartDetail)
+	_, err := server.Store.GetCartDetailByUIDAndGoodsID(ctx, cartDetail)
 	if err == sql.ErrNoRows {
 		return &proto.Empty{}, status.Error(codes.NotFound, "没有找到该条目")
 	} else if err != nil {
@@ -158,12 +175,11 @@ func (server *OrderServer) UpdateCartItem(ctx context.Context, req *proto.Update
 	updateArg := model.UpdateCartItemParams{
 		UpdatedAt: time.Now(),
 	}
-	// 如果之前的和现在的不同，就使用现在的
-	if req.Checked != oldCart.Checked {
-		updateArg.Checked = req.Checked
-	}
 
-	if req.Nums != oldCart.Nums {
+	// 状态传过来是什么就是什么
+	updateArg.Checked = req.Checked
+	// 只有当传过来的值大于0的时候才能更新
+	if req.Nums > 0 {
 		updateArg.Nums = req.Nums
 	}
 
