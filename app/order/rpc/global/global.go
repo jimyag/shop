@@ -7,11 +7,14 @@ import (
 
 	remoteConfig "github.com/jimyag/shop/app/order/rpc/config"
 	"github.com/jimyag/shop/common/model"
+	"github.com/jimyag/shop/common/proto"
 )
 
 var (
-	Logger       *zap.Logger             // logger
-	RemoteConfig *remoteConfig.ALLConfig //远程配置中心里面的配置
-	ConfigCenter *model.ConfigCenterInfo //配置中心的位置信息
-	DB           *sql.DB                 // database
+	Logger          *zap.Logger             // logger
+	RemoteConfig    *remoteConfig.ALLConfig //远程配置中心里面的配置
+	ConfigCenter    *model.ConfigCenterInfo //配置中心的位置信息
+	DB              *sql.DB                 // database
+	GoodsClient     proto.GoodsClient       // goods client
+	InventoryClient proto.InventoryClient   // inventory client
 )
