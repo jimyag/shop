@@ -1,0 +1,8 @@
+host: "localhost"
+port: 8500
+release-path: "shop/order/rpc/release.yaml"
+debug-path: "shop/order/rpc/debug.yaml"
+file-type: "yaml"
+type: "consul"
+env-name: "shop_debug"
+
