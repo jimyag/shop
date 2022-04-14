@@ -19,7 +19,7 @@ service order{
   // 获得订单列表
   rpc GetOrderList(GetOrderListRequest)returns(GetOrderListResponse);
   // 订单的详情
-  rpc GetOrderDetail(GetOrderDetailRequest)returns(OrderInfo);
+  rpc GetOrderDetail(GetOrderDetailRequest)returns(OrderDetailResponse);
   // 更新订单状态
   rpc UpdateOrderStatus(OrderInfo) returns(OrderInfo);
 }
@@ -99,6 +99,19 @@ message GetOrderListResponse{
 }
 
 message GetOrderDetailRequest{
-  int32 userID = 1;
   int32 orderID = 2;
+}
+
+message OrderGoods{
+  int32 id = 1;
+  int32 orderID = 2;
+  int32 goodsID = 3;
+  string goodsName = 4;
+  float goodsPrice = 5;
+  int32 goodsNum = 6;
+}
+
+message OrderDetailResponse{
+  OrderInfo orderInfo = 1;
+  repeated  OrderGoods goods = 2;
 }
