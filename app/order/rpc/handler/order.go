@@ -14,20 +14,37 @@ import (
 	"github.com/jimyag/shop/common/proto"
 )
 
+//
+// OrderServer
+//  @Description: order 的server
+//
 type OrderServer struct {
 	Store model.Store
 }
 
+//
+// NewOrderServer
+//  @Description: 创建 order server
+//  @param store
+//  @return *OrderServer
+//
 func NewOrderServer(store model.Store) *OrderServer {
 	return &OrderServer{Store: store}
 }
 
-// CartItemList 获得购物车中的商品列表
+//
+// CartItemList
+//  @Description: 获取用户的购物车列表
+//  @receiver server
+//  @param ctx
+//  @param req
+//  @return *proto.CartItemListResponse
+//  @return error
+//
 func (server *OrderServer) CartItemList(ctx context.Context, req *proto.CartItemListRequest) (*proto.CartItemListResponse, error) {
 	cartList, err := server.Store.GetCartListByUid(ctx, req.GetUid())
-	if err == sql.ErrNoRows {
-		return &proto.CartItemListResponse{}, status.Error(codes.NotFound, "购物车为空")
-	} else if err != nil {
+	// 没数据不用关心
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		global.Logger.Error(err.Error())
 		return &proto.CartItemListResponse{}, status.Error(codes.Internal, "未知错误")
 	}
