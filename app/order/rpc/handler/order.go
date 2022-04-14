@@ -223,16 +223,23 @@ func (server *OrderServer) CreateOrder(ctx context.Context, req *proto.CreateOrd
 	return nil, status.Errorf(codes.Unimplemented, "method CreateOrder not implemented")
 }
 
-// GetOrderList 从第一页开始获得
+//
+// GetOrderList
+//  @Description:  从第一页开始获得某个用户的订单列表
+//  @receiver server
+//  @param ctx
+//  @param req
+//  @return *proto.GetOrderListResponse
+//  @return error
+//  todo 分页有问题，但是不影响由于没有后台管理可以不用管
+//
 func (server *OrderServer) GetOrderList(ctx context.Context, req *proto.GetOrderListRequest) (*proto.GetOrderListResponse, error) {
 	arg := model.GetOrderListParams{}
 	arg.UserID = req.UserID
 	arg.Limit = req.PageSize
 	arg.Offset = (req.PageNum - 1) * req.PageSize
 	orderList, err := server.Store.GetOrderList(ctx, arg)
-	if err == sql.ErrNoRows {
-		return &proto.GetOrderListResponse{}, status.Error(codes.NotFound, "没有订单")
-	} else if err != nil {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		global.Logger.Error(err.Error())
 		return &proto.GetOrderListResponse{}, status.Error(codes.Internal, "未知错误")
 	}
