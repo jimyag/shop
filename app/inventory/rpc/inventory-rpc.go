@@ -37,6 +37,9 @@ func main() {
 	// 初始化 database
 	initialize.InitDatabase()
 
+	// 初始化 redsync
+	initialize.InitRedSync()
+
 	// 初始化jaeger
 	tracer, cl, err := initialize.InitJaeger()
 	if err != nil {
