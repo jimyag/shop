@@ -12,7 +12,7 @@ import (
 
 func TestSetInv(t *testing.T) {
 	in := proto.GoodInvInfo{
-		GoodsId: 1,
+		GoodsId: 2,
 		Num:     9000,
 	}
 	inventory, err := inventoryClient.SetInv(context.Background(), &in)
@@ -23,39 +23,62 @@ func TestSetInv(t *testing.T) {
 func TestInvDetail(t *testing.T) {
 	in := proto.GoodInvInfo{
 		GoodsId: 1,
-		Num:     10,
 	}
 	inventory, err := inventoryClient.InvDetail(context.Background(), &in)
 	require.NoError(t, err)
 	require.NotNil(t, inventory)
-	require.Equal(t, in.Num, inventory.Num)
 	require.Equal(t, in.GoodsId, inventory.GoodsId)
 }
 
 func TestSell(t *testing.T) {
-	in := proto.GoodInvInfo{
-		GoodsId: 5,
-		Num:     1,
-	}
-	inventory, err := inventoryClient.SetInv(context.Background(), &in)
-	require.NoError(t, err)
-	require.NotNil(t, inventory)
 
-	ins := proto.SellInfo{
+	inNoErr := proto.SellInfo{
 		GoodsInfo: []*proto.GoodInvInfo{
 			{
 				GoodsId: 1,
 				Num:     10,
 			},
 			{
-				GoodsId: 4,
+				GoodsId: 2,
 				Num:     100,
 			},
 		},
 	}
-	inventory, err = inventoryClient.Sell(context.Background(), &ins)
+	_, err := inventoryClient.Sell(context.Background(), &inNoErr)
+	require.NoError(t, err)
+
+	// 第一件商品扣减成功了第二件商品扣减失败 回滚
+	inErr := proto.SellInfo{
+		GoodsInfo: []*proto.GoodInvInfo{
+			{
+				GoodsId: 1,
+				Num:     10,
+			},
+			{
+				GoodsId: 99999,
+				Num:     100,
+			},
+		},
+	}
+	_, err = inventoryClient.Sell(context.Background(), &inErr)
 	require.Error(t, err)
-	require.Nil(t, inventory)
+
+	// 第一件商品扣减成功了第二件商品数量不足 回滚
+	inErr = proto.SellInfo{
+		GoodsInfo: []*proto.GoodInvInfo{
+			{
+				GoodsId: 1,
+				Num:     10,
+			},
+			{
+				GoodsId: 2,
+				Num:     9999999,
+			},
+		},
+	}
+
+	_, err = inventoryClient.Sell(context.Background(), &inErr)
+	require.Error(t, err)
 
 }
 
@@ -92,11 +115,14 @@ func TestRollBack(t *testing.T) {
 				GoodsId: 1,
 				Num:     10,
 			},
+			{
+				GoodsId: 2,
+				Num:     100,
+			},
 		},
 	}
-	inventory, err := inventoryClient.Rollback(context.Background(), &in)
+	_, err := inventoryClient.Rollback(context.Background(), &in)
 	require.NoError(t, err)
-	require.NotNil(t, inventory)
 
 	in = proto.SellInfo{
 		GoodsInfo: []*proto.GoodInvInfo{
@@ -110,7 +136,6 @@ func TestRollBack(t *testing.T) {
 			},
 		},
 	}
-	inventory, err = inventoryClient.Rollback(context.Background(), &in)
+	_, err = inventoryClient.Rollback(context.Background(), &in)
 	require.Error(t, err)
-	require.Nil(t, inventory)
 }

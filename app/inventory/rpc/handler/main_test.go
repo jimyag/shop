@@ -15,7 +15,7 @@ var (
 )
 
 const (
-	target = "192.168.0.2:58560"
+	target = "192.168.0.2:50053"
 )
 
 func TestMain(m *testing.M) {
