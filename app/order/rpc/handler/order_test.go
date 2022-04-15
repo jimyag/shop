@@ -77,3 +77,15 @@ func TestOrderServer_GetOrderDetail(t *testing.T) {
 	require.NotEmpty(t, rsp)
 	t.Logf("%v", rsp)
 }
+
+func TestOrderServer_GetOrderList(t *testing.T) {
+	rsp, err := orderClient.GetOrderList(
+		context.Background(),
+		&proto.GetOrderListRequest{
+			UserID:   116,
+			PageSize: 10,
+			PageNum:  1})
+	require.NoError(t, err)
+	require.True(t, len(rsp.Data) > 0)
+	t.Logf("%v", rsp)
+}
