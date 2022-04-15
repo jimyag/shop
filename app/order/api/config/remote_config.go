@@ -51,5 +51,6 @@ type ServerInfo struct {
 	JaegerInfo      JaegerConfig `mapstructure:"jaeger-info"`       // jaeger 的 配置
 	Secret          Secret       `mapstructure:"secret"`            // token 密钥
 	Redis           RedisInfo    `mapstructure:"redis"`             // redis 的配置
-	OrderGrpcServer GrpcServer   `mapstructure:"order-grpc-server"` // user grpc server 的配置
+	OrderGrpcServer GrpcServer   `mapstructure:"order-grpc-server"` // order grpc server 的配置
+	GoodsGrpcServer GrpcServer   `mapstructure:"goods-grpc-server"` // goods grpc server 的配置
 }
