@@ -22,3 +22,6 @@ timeout:
 
 order-grpc-server:
   name: "order-rpc"
+
+goods-grpc-server:
+  name: "goods-rpc"
