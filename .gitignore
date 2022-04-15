@@ -5,3 +5,4 @@
 /app/goods/api/goods-api.exe
 /app/inventory/rpc/inventory-rpc.exe
 /app/order/rpc/order-rpc.exe
+/app/order/api/order-api.exe
