@@ -3,6 +3,7 @@ package initialize
 import (
 	"fmt"
 
+	_ "github.com/mbobakov/grpc-consul-resolver"
 	"github.com/opentracing/opentracing-go"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
