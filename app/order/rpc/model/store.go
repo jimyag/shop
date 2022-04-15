@@ -7,6 +7,7 @@ import (
 )
 
 type Store interface {
+	ExecTx(ctx context.Context, fn func(queries *Queries) error) error
 	Querier
 }
 
