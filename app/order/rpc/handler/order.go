@@ -450,6 +450,15 @@ func (server *OrderServer) GetOrderDetail(ctx context.Context, req *proto.GetOrd
 	response.Goods = rspOrderGoods
 	return &response, nil
 }
+
+// UpdateOrderStatus
+//  @Description: 更新订单状态
+//  @receiver server
+//  @param ctx
+//  @param req
+//  @return *proto.OrderInfo
+//  @return error
+//
 func (server *OrderServer) UpdateOrderStatus(ctx context.Context, req *proto.OrderInfo) (*proto.OrderInfo, error) {
 	_, err := server.Store.GetOrderDetail(ctx, model.GetOrderDetailParams{UserID: req.UserID, OrderID: req.OrderID})
 	if err == sql.ErrNoRows {
@@ -467,24 +476,28 @@ func (server *OrderServer) UpdateOrderStatus(ctx context.Context, req *proto.Ord
 		arg.PayTime = sql.NullTime{Time: time.Now(), Valid: true}
 		arg.Status = int64(req.Status)
 		arg.OrderID = req.OrderID
-		orderInfo, err := server.Store.UpdateOrder(ctx, arg)
-		if err != nil {
-			global.Logger.Error(err.Error())
-			return &proto.OrderInfo{}, status.Error(codes.Internal, "未知错误")
-		}
-		rsp := proto.OrderInfo{
-			Id:      int32(orderInfo.ID),
-			UserID:  orderInfo.UserID,
-			OrderID: orderInfo.OrderID,
-			PayType: orderInfo.PayType.String,
-			Status:  int32(orderInfo.Status),
-			Total:   float32(orderInfo.OrderMount.Float64),
-			Post:    orderInfo.Post,
-			Address: orderInfo.Post,
-			Name:    orderInfo.SignerName,
-			Mobile:  orderInfo.SignerMobile,
-		}
-		return &rsp, nil
+
+	} else {
+		arg.Status = int64(req.Status)
+		arg.OrderID = req.OrderID
 	}
-	return &proto.OrderInfo{}, status.Error(codes.InvalidArgument, "参数无效")
+
+	orderInfo, err := server.Store.UpdateOrder(ctx, arg)
+	if err != nil {
+		global.Logger.Error(err.Error())
+		return &proto.OrderInfo{}, status.Error(codes.Internal, "未知错误")
+	}
+	rsp := proto.OrderInfo{
+		Id:      int32(orderInfo.ID),
+		UserID:  orderInfo.UserID,
+		OrderID: orderInfo.OrderID,
+		PayType: orderInfo.PayType.String,
+		Status:  int32(orderInfo.Status),
+		Total:   float32(orderInfo.OrderMount.Float64),
+		Post:    orderInfo.Post,
+		Address: orderInfo.Post,
+		Name:    orderInfo.SignerName,
+		Mobile:  orderInfo.SignerMobile,
+	}
+	return &rsp, nil
 }
