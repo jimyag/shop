@@ -16,7 +16,31 @@ import (
 //  @param ctx*gin.Context
 //
 func CreateShopCart(ctx *gin.Context) {
+	cartItemRequest := request.CreateCartItemRequest{}
+	_ = ctx.ShouldBind(&cartItemRequest)
+	msg, err := validate.Validate(cartItemRequest, global.Validate, global.Trans)
+	if err != nil {
+		model.FailWithMsg(msg, ctx)
+		return
+	}
 
+	// 判断商品是否存在
+	_, err = global.GoodsSrvClient.GetGoods(ctx, &proto.GoodID{Id: cartItemRequest.GoodsId})
+	if err != nil {
+		model.FailWithMsg(msg, ctx)
+		return
+	}
+	arg := &proto.CreateCartItemRequest{
+		UserID:  cartItemRequest.UserId,
+		GoodsID: cartItemRequest.GoodsId,
+		Nums:    cartItemRequest.Nums,
+	}
+	rsp, err := global.OrderSrvClient.CreateCartItem(ctx, arg)
+	if err != nil {
+		model.FailWithMsg(err.Error(), ctx)
+		return
+	}
+	model.OkWithData(rsp, ctx)
 }
 
 //
