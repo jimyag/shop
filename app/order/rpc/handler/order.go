@@ -12,6 +12,7 @@ import (
 
 	"github.com/jimyag/shop/app/order/rpc/global"
 	"github.com/jimyag/shop/app/order/rpc/model"
+	"github.com/jimyag/shop/app/order/rpc/tools/generate"
 	"github.com/jimyag/shop/common/proto"
 )
 
@@ -205,22 +206,151 @@ func (server *OrderServer) UpdateCartItem(ctx context.Context, req *proto.Update
 	}
 	return &proto.Empty{}, nil
 }
+
+//
+// CreateOrder
+//  @Description: 新建订单
+//  @receiver server
+//  @param ctx
+//  @param req
+//  @return *proto.OrderInfo
+//  @return error
+//
 func (server *OrderServer) CreateOrder(ctx context.Context, req *proto.CreateOrderRequest) (*proto.OrderInfo, error) {
+	// 4. 从购物车中拿到选中的商品
+	// 1. 商品的金额自己查询 商品服务
+	// 2. 库存的扣减 库存服务
+	// 3. 订单的基本信息表
+	//
+	// 5. 从购物车中删除已购买的记录
 	// 从购物车中拿到选中的商品
 	getCheckedCart := model.GetCartListCheckedParams{
 		UserID:  req.UserID,
 		Checked: true,
 	}
-	_, err := server.Store.GetCartListChecked(ctx, getCheckedCart)
+	goodsIDS := make([]*proto.GoodID, 0)
+	shoppingCart, err := server.Store.GetCartListChecked(ctx, getCheckedCart)
 	if errors.Is(err, sql.ErrNoRows) {
 		return &proto.OrderInfo{}, status.Error(codes.InvalidArgument, "没有选中的商品")
 	} else if err != nil {
 		return &proto.OrderInfo{}, status.Error(codes.Internal, "内部错误")
 	}
 
-	// todo
-	// 批量获得goods的信息
-	return nil, status.Errorf(codes.Unimplemented, "method CreateOrder not implemented")
+	// 保存 商品的数量
+	goodsNumMap := make(map[int32]int32)
+	for _, cart := range shoppingCart {
+		goodsIDS = append(goodsIDS, &proto.GoodID{Id: cart.GoodsID})
+		goodsNumMap[cart.GoodsID] = cart.Nums
+	}
+
+	// 连接商品服务
+	goodsInfos, err := global.GoodsClient.GetGoodsBatchInfo(ctx, &proto.ManyGoodsID{GoodsIDs: goodsIDS})
+	if err != nil {
+		global.Logger.Error("批量获得goods info 失败", zap.Error(err))
+		return &proto.OrderInfo{}, status.Error(codes.Internal, "内部错误")
+	}
+
+	// 订单的总金额
+	var orderAmount float32
+	// 订单中商品的参数
+	createOrderGoodsParams := make([]*model.CreateOrderGoodsParams, 0)
+	// 扣减库存 的参数
+	sellInfo := proto.SellInfo{GoodsInfo: make([]*proto.GoodInvInfo, 0)}
+	for _, datum := range goodsInfos.Data {
+		// 求总金额
+		orderAmount += datum.Price * float32(goodsNumMap[datum.Id])
+		// 订单中的参数
+		createOrderGoodsParams = append(createOrderGoodsParams, &model.CreateOrderGoodsParams{
+			GoodsID:    datum.Id,
+			GoodsName:  datum.Name,
+			GoodsPrice: float64(datum.Price),
+			Nums:       goodsNumMap[datum.Id],
+		})
+		// 扣减库存的参数
+		sellInfo.GoodsInfo = append(sellInfo.GoodsInfo, &proto.GoodInvInfo{
+			GoodsId: datum.Id,
+			Num:     goodsNumMap[datum.Id],
+		})
+	}
+
+	// 跨服务调用 扣减库存
+
+	_, err = global.InventoryClient.Sell(ctx, &sellInfo)
+	if err != nil {
+		global.Logger.Error("扣减库存失败", zap.Error(err))
+		return &proto.OrderInfo{}, status.Error(codes.ResourceExhausted, "扣减库存失败")
+	}
+
+	createOrderParams := model.CreateOrderParams{}
+	// 本地服务的事务
+	err = server.Store.ExecTx(ctx, func(queries *model.Queries) error {
+
+		// 生成订单表
+		createOrderParams = model.CreateOrderParams{
+			UserID:  req.UserID,
+			OrderID: generate.GenerateOrderID(req.UserID),
+			Status:  1, // 1 待支付 2 成功 3 超时关闭
+			OrderMount: sql.NullFloat64{
+				Float64: float64(orderAmount),
+				Valid:   true,
+			},
+			Address:      req.Address,
+			SignerName:   req.Name,
+			SignerMobile: req.Mobile,
+			Post:         req.Post,
+		}
+
+		// 保存order
+		_, err = server.Store.CreateOrder(ctx, createOrderParams)
+		if err != nil {
+			return err
+		}
+
+		// 将订单id更新
+		for _, good := range createOrderGoodsParams {
+			good.OrderID = createOrderParams.OrderID
+		}
+		// 批量插入订单中的商品
+		err = server.Store.ExecTx(ctx, func(queries *model.Queries) error {
+			for _, good := range createOrderGoodsParams {
+				_, err = queries.CreateOrderGoods(ctx, *good)
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+
+		// 批量删除购物车中记录
+		err = server.Store.ExecTx(ctx, func(queries *model.Queries) error {
+			for _, cart := range shoppingCart {
+				_, err = queries.DeleteCartItem(ctx, model.DeleteCartItemParams{
+					DeletedAt: sql.NullTime{Time: time.Now(), Valid: true},
+					UserID:    cart.UserID,
+					GoodsID:   cart.GoodsID,
+				})
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		global.Logger.Error("创建订单失败", zap.Error(err))
+		return &proto.OrderInfo{}, status.Error(codes.Internal, "内部错误")
+	}
+	return &proto.OrderInfo{
+		OrderID: createOrderParams.OrderID,
+		Total:   orderAmount,
+	}, nil
 }
 
 //
