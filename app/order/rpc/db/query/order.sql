@@ -62,8 +62,7 @@ limit $2 offset $3;
 -- name: GetOrderDetail :one
 SELECT *
 FROM "order_info"
-WHERE user_id = $1
-  and order_id = $2 and deleted_at IS  NULL
+WHERE  order_id = $1 and deleted_at IS  NULL
 LIMIT 1;
 
 
