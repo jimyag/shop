@@ -14,9 +14,9 @@ type Querier interface {
 	GetCartDetailByUIDAndGoodsID(ctx context.Context, arg GetCartDetailByUIDAndGoodsIDParams) (ShoppingCart, error)
 	GetCartListByUid(ctx context.Context, userID int32) ([]ShoppingCart, error)
 	GetCartListChecked(ctx context.Context, arg GetCartListCheckedParams) ([]ShoppingCart, error)
-	GetOrderDetail(ctx context.Context, arg GetOrderDetailParams) (OrderInfo, error)
+	GetOrderDetail(ctx context.Context, orderID int64) (OrderInfo, error)
 	GetOrderList(ctx context.Context, arg GetOrderListParams) ([]OrderInfo, error)
-	GetOrderListByOrderID(ctx context.Context, orderID int32) ([]OrderGood, error)
+	GetOrderListByOrderID(ctx context.Context, orderID int64) ([]OrderGood, error)
 	UpdateCartItem(ctx context.Context, arg UpdateCartItemParams) (ShoppingCart, error)
 	UpdateOrder(ctx context.Context, arg UpdateOrderParams) (OrderInfo, error)
 }

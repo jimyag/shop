@@ -58,8 +58,8 @@ returning id, created_at, updated_at, deleted_at, user_id, order_id, pay_type, s
 
 type CreateOrderParams struct {
 	UserID       int32           `json:"user_id"`
-	OrderID      int32           `json:"order_id"`
-	Status       int64           `json:"status"`
+	OrderID      int64           `json:"order_id"`
+	Status       int16           `json:"status"`
 	OrderMount   sql.NullFloat64 `json:"order_mount"`
 	Address      string          `json:"address"`
 	SignerName   string          `json:"signer_name"`
@@ -106,7 +106,7 @@ returning id, created_at, updated_at, deleted_at, order_id, goods_id, goods_name
 `
 
 type CreateOrderGoodsParams struct {
-	OrderID    int32   `json:"order_id"`
+	OrderID    int64   `json:"order_id"`
 	GoodsID    int32   `json:"goods_id"`
 	GoodsName  string  `json:"goods_name"`
 	GoodsPrice float64 `json:"goods_price"`
@@ -281,18 +281,12 @@ func (q *Queries) GetCartListChecked(ctx context.Context, arg GetCartListChecked
 const getOrderDetail = `-- name: GetOrderDetail :one
 SELECT id, created_at, updated_at, deleted_at, user_id, order_id, pay_type, status, trade_id, order_mount, pay_time, address, signer_name, signer_mobile, post
 FROM "order_info"
-WHERE user_id = $1
-  and order_id = $2 and deleted_at IS  NULL
+WHERE  order_id = $1 and deleted_at IS  NULL
 LIMIT 1
 `
 
-type GetOrderDetailParams struct {
-	UserID  int32 `json:"user_id"`
-	OrderID int32 `json:"order_id"`
-}
-
-func (q *Queries) GetOrderDetail(ctx context.Context, arg GetOrderDetailParams) (OrderInfo, error) {
-	row := q.db.QueryRowContext(ctx, getOrderDetail, arg.UserID, arg.OrderID)
+func (q *Queries) GetOrderDetail(ctx context.Context, orderID int64) (OrderInfo, error) {
+	row := q.db.QueryRowContext(ctx, getOrderDetail, orderID)
 	var i OrderInfo
 	err := row.Scan(
 		&i.ID,
@@ -373,7 +367,7 @@ WHERE order_id = $1
   and deleted_at IS  NULL
 `
 
-func (q *Queries) GetOrderListByOrderID(ctx context.Context, orderID int32) ([]OrderGood, error) {
+func (q *Queries) GetOrderListByOrderID(ctx context.Context, orderID int64) ([]OrderGood, error) {
 	rows, err := q.db.QueryContext(ctx, getOrderListByOrderID, orderID)
 	if err != nil {
 		return nil, err
@@ -460,8 +454,8 @@ type UpdateOrderParams struct {
 	UpdatedAt time.Time      `json:"updated_at"`
 	PayType   sql.NullString `json:"pay_type"`
 	PayTime   sql.NullTime   `json:"pay_time"`
-	Status    int64          `json:"status"`
-	OrderID   int32          `json:"order_id"`
+	Status    int16          `json:"status"`
+	OrderID   int64          `json:"order_id"`
 }
 
 func (q *Queries) UpdateOrder(ctx context.Context, arg UpdateOrderParams) (OrderInfo, error) {

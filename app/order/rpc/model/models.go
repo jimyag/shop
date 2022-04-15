@@ -12,7 +12,7 @@ type OrderGood struct {
 	CreatedAt  time.Time    `json:"created_at"`
 	UpdatedAt  time.Time    `json:"updated_at"`
 	DeletedAt  sql.NullTime `json:"deleted_at"`
-	OrderID    int32        `json:"order_id"`
+	OrderID    int64        `json:"order_id"`
 	GoodsID    int32        `json:"goods_id"`
 	GoodsName  string       `json:"goods_name"`
 	GoodsPrice float64      `json:"goods_price"`
@@ -25,9 +25,9 @@ type OrderInfo struct {
 	UpdatedAt    time.Time       `json:"updated_at"`
 	DeletedAt    sql.NullTime    `json:"deleted_at"`
 	UserID       int32           `json:"user_id"`
-	OrderID      int32           `json:"order_id"`
+	OrderID      int64           `json:"order_id"`
 	PayType      sql.NullString  `json:"pay_type"`
-	Status       int64           `json:"status"`
+	Status       int16           `json:"status"`
 	TradeID      sql.NullString  `json:"trade_id"`
 	OrderMount   sql.NullFloat64 `json:"order_mount"`
 	PayTime      sql.NullTime    `json:"pay_time"`
