@@ -18,14 +18,15 @@ import (
 //  @Description: 初始化所有的grpc client
 //
 func InitGrpcClient() {
-	initUserClient()
+	initOrderClient()
+	initGoodsClient()
 }
 
 //
 // initUserClient
-//  @Description: 初始化 user client
+//  @Description: 初始化 order client
 //
-func initUserClient() {
+func initOrderClient() {
 	conn, err := grpc.Dial(
 		fmt.Sprintf("%s://%s:%d/%s?wait=14s",
 			global.ConfigCenter.Type,
@@ -43,9 +44,38 @@ func initUserClient() {
 	)
 
 	if err != nil {
-		global.Logger.Fatal("用户服务发现错误", zap.Error(err))
+		global.Logger.Fatal("订单服务发现错误", zap.Error(err))
 	}
 	global.OrderSrvClient = proto.NewOrderClient(conn)
 
-	global.Logger.Info("发现用户服务......")
+	global.Logger.Info("发现订单服务......")
+}
+
+//
+// initUserClient
+//  @Description: 初始化 goods client
+//
+func initGoodsClient() {
+	conn, err := grpc.Dial(
+		fmt.Sprintf("%s://%s:%d/%s?wait=14s",
+			global.ConfigCenter.Type,
+			global.ConfigCenter.Host,
+			global.ConfigCenter.Port,
+			global.RemoteConfig.GoodsGrpcServer.Name,
+		),
+		grpc.WithInsecure(),
+		grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy": "round_robin"}`),
+		grpc.WithUnaryInterceptor(
+			otgrpc.OpenTracingClientInterceptor(
+				opentracing.GlobalTracer(),
+			),
+		),
+	)
+
+	if err != nil {
+		global.Logger.Fatal("商品服务发现错误", zap.Error(err))
+	}
+	global.GoodsSrvClient = proto.NewGoodsClient(conn)
+
+	global.Logger.Info("发现商品服务......")
 }
