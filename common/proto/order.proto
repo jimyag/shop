@@ -76,7 +76,7 @@ message CreateOrderRequest{
 message OrderInfo{
   int32 id = 1;
   int32 userID = 2;
-  int32 orderID = 3;
+  int64 orderID = 3;
   string payType = 4;
   int32 status = 5; // 支付的状态
   float total = 6; // 总金额
@@ -99,12 +99,12 @@ message GetOrderListResponse{
 }
 
 message GetOrderDetailRequest{
-  int32 orderID = 2;
+  int64 orderID = 2;
 }
 
 message OrderGoods{
   int32 id = 1;
-  int32 orderID = 2;
+  int64 orderID = 2;
   int32 goodsID = 3;
   string goodsName = 4;
   float goodsPrice = 5;
