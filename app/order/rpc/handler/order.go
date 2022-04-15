@@ -189,6 +189,8 @@ func (server *OrderServer) UpdateCartItem(ctx context.Context, req *proto.Update
 	}
 
 	updateArg := model.UpdateCartItemParams{
+		UserID:    req.UserID,
+		GoodsID:   req.GoodsID,
 		UpdatedAt: time.Now(),
 	}
 
