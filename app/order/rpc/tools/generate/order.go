@@ -13,7 +13,7 @@ import (
 //  年月日时分秒+uid+随机数
 //  @param userID
 //
-func GenerateOrderID(userID int32) int32 {
+func GenerateOrderID(userID int32) int64 {
 	now := time.Now()
 	rand.Seed(now.UnixNano())
 	orderSn := fmt.Sprintf("%d%d%d%d%d%d%d%d",
@@ -22,11 +22,11 @@ func GenerateOrderID(userID int32) int32 {
 		now.Day(),
 		now.Hour(),
 		now.Minute(),
-		now.Nanosecond(),
+		now.Second(),
 		userID,
 		rand.Intn(90)+10,
 	)
 
-	orderID, _ := strconv.Atoi(orderSn)
-	return int32(orderID)
+	orderID, _ := strconv.ParseInt(orderSn, 10, 64)
+	return orderID
 }
