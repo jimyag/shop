@@ -9,11 +9,44 @@ import (
 	"github.com/jimyag/shop/common/proto"
 )
 
-func TestSetInv(t *testing.T) {
+//
+//  TestOrderServer_CreateCartItem
+//  @Description: 测试创建购物车记录
+//  @param t
+//
+func TestOrderServer_CreateCartItem(t *testing.T) {
 
-	in := proto.CreateOrderRequest{}
-	order, err := orderClient.CreateOrder(context.Background(), &in)
-	// todo
+	shopCartItem, err := orderClient.CreateCartItem(context.Background(), &proto.CreateCartItemRequest{
+		UserID:  116,
+		GoodsID: 5,
+		Nums:    10,
+		Checked: true,
+	})
 	require.NoError(t, err)
-	require.NotNil(t, order)
+	require.NotNil(t, shopCartItem)
+}
+
+func TestGetCartList(t *testing.T) {
+	list, err := orderClient.CartItemList(context.Background(), &proto.CartItemListRequest{Uid: 116})
+	require.NoError(t, err)
+	require.True(t, len(list.Data) > 0)
+	t.Log(list)
+}
+
+func TestOrderServer_UpdateCartItem(t *testing.T) {
+	_, err := orderClient.UpdateCartItem(context.Background(), &proto.UpdateCartItemRequest{
+		UserID:  116,
+		GoodsID: 5,
+		Nums:    1,
+		Checked: true,
+	})
+	require.NoError(t, err)
+
+	_, err = orderClient.UpdateCartItem(context.Background(), &proto.UpdateCartItemRequest{
+		UserID:  116,
+		GoodsID: 9999999,
+		Nums:    1,
+		Checked: false,
+	})
+	require.Error(t, err)
 }
