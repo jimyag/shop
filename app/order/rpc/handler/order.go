@@ -46,7 +46,9 @@ func NewOrderServer(store model.Store) *OrderServer {
 func (server *OrderServer) CartItemList(ctx context.Context, req *proto.CartItemListRequest) (*proto.CartItemListResponse, error) {
 	cartList, err := server.Store.GetCartListByUid(ctx, req.GetUid())
 	// 没数据不用关心
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+	if cartList == nil {
+		return &proto.CartItemListResponse{}, status.Error(codes.NotFound, "没有记录")
+	} else if err != nil {
 		global.Logger.Error(err.Error())
 		return &proto.CartItemListResponse{}, status.Error(codes.Internal, "未知错误")
 	}
@@ -232,7 +234,7 @@ func (server *OrderServer) CreateOrder(ctx context.Context, req *proto.CreateOrd
 	}
 	goodsIDS := make([]*proto.GoodID, 0)
 	shoppingCart, err := server.Store.GetCartListChecked(ctx, getCheckedCart)
-	if errors.Is(err, sql.ErrNoRows) {
+	if shoppingCart == nil {
 		return &proto.OrderInfo{}, status.Error(codes.InvalidArgument, "没有选中的商品")
 	} else if err != nil {
 		return &proto.OrderInfo{}, status.Error(codes.Internal, "内部错误")
@@ -371,7 +373,7 @@ func (server *OrderServer) GetOrderList(ctx context.Context, req *proto.GetOrder
 	arg.Limit = req.PageSize
 	arg.Offset = (req.PageNum - 1) * req.PageSize
 	orderList, err := server.Store.GetOrderList(ctx, arg)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+	if err != nil {
 		global.Logger.Error(err.Error())
 		return &proto.GetOrderListResponse{}, status.Error(codes.Internal, "未知错误")
 	}
@@ -409,7 +411,7 @@ func (server *OrderServer) GetOrderList(ctx context.Context, req *proto.GetOrder
 //
 func (server *OrderServer) GetOrderDetail(ctx context.Context, req *proto.GetOrderDetailRequest) (*proto.OrderDetailResponse, error) {
 	// 获得订单信息
-	orderInfo, err := server.Store.GetOrderDetail(ctx, model.GetOrderDetailParams{OrderID: req.OrderID})
+	orderInfo, err := server.Store.GetOrderDetail(ctx, req.OrderID)
 	if err == sql.ErrNoRows {
 		return &proto.OrderDetailResponse{}, status.Error(codes.NotFound, "没有找到该订单")
 	} else if err != nil {
@@ -436,6 +438,8 @@ func (server *OrderServer) GetOrderDetail(ctx context.Context, req *proto.GetOrd
 	if err != nil {
 		global.Logger.Error(err.Error())
 		return &proto.OrderDetailResponse{}, status.Error(codes.Internal, "内部错误")
+	} else if orderGoods == nil {
+		return &proto.OrderDetailResponse{}, status.Error(codes.NotFound, "没有找到记录")
 	}
 	rspOrderGoods := make([]*proto.OrderGoods, 0)
 	for _, good := range orderGoods {
@@ -462,7 +466,7 @@ func (server *OrderServer) GetOrderDetail(ctx context.Context, req *proto.GetOrd
 //  @return error
 //
 func (server *OrderServer) UpdateOrderStatus(ctx context.Context, req *proto.OrderInfo) (*proto.OrderInfo, error) {
-	_, err := server.Store.GetOrderDetail(ctx, model.GetOrderDetailParams{UserID: req.UserID, OrderID: req.OrderID})
+	_, err := server.Store.GetOrderDetail(ctx, req.OrderID)
 	if err == sql.ErrNoRows {
 		return nil, status.Error(codes.NotFound, "没有订单")
 	} else if err != nil {
@@ -476,11 +480,11 @@ func (server *OrderServer) UpdateOrderStatus(ctx context.Context, req *proto.Ord
 	if req.PayType != "" {
 		arg.PayType = sql.NullString{String: req.PayType, Valid: true}
 		arg.PayTime = sql.NullTime{Time: time.Now(), Valid: true}
-		arg.Status = int64(req.Status)
+		arg.Status = int16(req.Status)
 		arg.OrderID = req.OrderID
 
 	} else {
-		arg.Status = int64(req.Status)
+		arg.Status = int16(req.Status)
 		arg.OrderID = req.OrderID
 	}
 
