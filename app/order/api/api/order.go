@@ -69,7 +69,7 @@ func GetOrderDetail(ctx *gin.Context) {
 //
 func GetOrderList(ctx *gin.Context) {
 	getOrderListRequest := request.GetOrderListRequest{}
-	_ = ctx.ShouldBind(&getOrderListRequest)
+	_ = ctx.ShouldBindJSON(&getOrderListRequest)
 	msg, err := validate.Validate(getOrderListRequest, global.Validate, global.Trans)
 	if err != nil {
 		model.FailWithMsg(msg, ctx)
