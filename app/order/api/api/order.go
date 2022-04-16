@@ -16,12 +16,32 @@ import (
 //  @param ctx*gin.Context
 //
 func CreateOrder(ctx *gin.Context) {
+	createOrderRequest := request.CreateOrderRequest{}
+	_ = ctx.ShouldBindJSON(&createOrderRequest)
+	msg, err := validate.Validate(createOrderRequest, global.Validate, global.Trans)
+	if err != nil {
+		model.FailWithMsg(msg, ctx)
+		return
+	}
+	orderInfo, err := global.OrderSrvClient.CreateOrder(ctx, &proto.CreateOrderRequest{
+		UserID:  createOrderRequest.UserID,
+		Address: createOrderRequest.Address,
+		Mobile:  createOrderRequest.Mobile,
+		Name:    createOrderRequest.Name,
+		Post:    createOrderRequest.Post,
+	})
 
+	if err != nil {
+		model.FailWithMsg(err.Error(), ctx)
+		return
+	}
+	model.OkWithData(orderInfo, ctx)
 }
 
 //
 // GetOrderDetail
 //  @Description:  获取个人订单详情
+//  todo 验证是否是当前用户的订单
 //
 func GetOrderDetail(ctx *gin.Context) {
 	orderDetailRequest := &request.GetOrderDetailRequest{}
@@ -31,7 +51,6 @@ func GetOrderDetail(ctx *gin.Context) {
 		model.FailWithMsg(msg, ctx)
 		return
 	}
-
 	rsp, err := global.OrderSrvClient.GetOrderDetail(ctx, &proto.GetOrderDetailRequest{
 		OrderID: orderDetailRequest.OrderID,
 	})
