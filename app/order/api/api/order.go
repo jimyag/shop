@@ -24,6 +24,22 @@ func CreateOrder(ctx *gin.Context) {
 //  @Description:  获取个人订单详情
 //
 func GetOrderDetail(ctx *gin.Context) {
+	orderDetailRequest := &request.GetOrderDetailRequest{}
+	_ = ctx.ShouldBindJSON(&orderDetailRequest)
+	msg, err := validate.Validate(orderDetailRequest, global.Validate, global.Trans)
+	if err != nil {
+		model.FailWithMsg(msg, ctx)
+		return
+	}
+
+	rsp, err := global.OrderSrvClient.GetOrderDetail(ctx, &proto.GetOrderDetailRequest{
+		OrderID: orderDetailRequest.OrderID,
+	})
+	if err != nil {
+		model.FailWithMsg(err.Error(), ctx)
+		return
+	}
+	model.OkWithData(rsp, ctx)
 
 }
 

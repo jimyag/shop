@@ -9,3 +9,11 @@ type GetOrderListRequest struct {
 	PageSize int32 `json:"page_size" validate:"required,min=1" label:"每页数量"`
 	UserID   int32 `json:"user_id" validate:"required,min=1" label:"用户ID"`
 }
+
+//
+// GetOrderDetailRequest
+//  @Description: 获取订单详情
+//
+type GetOrderDetailRequest struct {
+	OrderID int64 `json:"order_id" validate:"required,min=1" label:"订单ID"`
+}
