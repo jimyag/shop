@@ -89,3 +89,19 @@ func TestOrderServer_GetOrderList(t *testing.T) {
 	require.True(t, len(rsp.Data) > 0)
 	t.Logf("%v", rsp)
 }
+
+//
+//  TestOrderServer_UpdateOrderStatus
+//  @Description: 测试更新订单状态 // 1 待支付 2 成功 3 超时关闭
+//  @param t
+//
+func TestOrderServer_UpdateOrderStatus(t *testing.T) {
+	order, err := orderClient.UpdateOrderStatus(context.Background(), &proto.OrderInfo{
+		UserID:  116,
+		OrderID: 20224151781711695,
+		PayType: "已超时",
+		Status:  3,
+	})
+	require.NoError(t, err)
+	t.Logf("%v", order)
+}
