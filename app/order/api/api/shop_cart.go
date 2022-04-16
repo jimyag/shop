@@ -79,7 +79,10 @@ func DeleteShopCartItem(ctx *gin.Context) {
 		model.FailWithMsg(msg, ctx)
 		return
 	}
-	_, err = global.OrderSrvClient.DeleteCartItems(ctx, &proto.DeleteCartItemsRequest{})
+	_, err = global.OrderSrvClient.DeleteCartItems(ctx, &proto.DeleteCartItemsRequest{
+		UserID:  deleteShopCartRequest.UserId,
+		GoodsID: deleteShopCartRequest.GoodsId,
+	})
 	if err != nil {
 		model.FailWithMsg(err.Error(), ctx)
 		return
@@ -93,5 +96,25 @@ func DeleteShopCartItem(ctx *gin.Context) {
 //  @param ctx
 //
 func UpdateShopCartItem(ctx *gin.Context) {
+
+	updateShopCartRequest := request.UpdateShopCartRequest{}
+	_ = ctx.ShouldBindJSON(&updateShopCartRequest)
+	msg, err := validate.Validate(updateShopCartRequest, global.Validate, global.Trans)
+	if err != nil {
+		model.FailWithMsg(msg, ctx)
+		return
+	}
+
+	_, err = global.OrderSrvClient.UpdateCartItem(ctx, &proto.UpdateCartItemRequest{
+		UserID:  updateShopCartRequest.UserId,
+		GoodsID: updateShopCartRequest.GoodsId,
+		Nums:    updateShopCartRequest.Nums,
+		Checked: updateShopCartRequest.Checker,
+	})
+	if err != nil {
+		model.FailWithMsg(err.Error(), ctx)
+		return
+	}
+	model.Ok(ctx)
 
 }

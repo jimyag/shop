@@ -26,3 +26,10 @@ type DeleteShopCartRequest struct {
 	UserId  int32 `json:"user_id" validate:"required,min=1" label:"用户ID"`
 	GoodsId int32 `json:"goods_id" validate:"required,min=1" label:"商品ID"`
 }
+
+type UpdateShopCartRequest struct {
+	UserId  int32 `json:"user_id" validate:"required,min=1" label:"用户ID"`
+	GoodsId int32 `json:"goods_id" validate:"required,min=1" label:"商品ID"`
+	Nums    int32 `json:"nums" validate:"required,min=1" label:"数量"`
+	Checker bool  `json:"checker" validate:"required" label:"是否选中"`
+}
