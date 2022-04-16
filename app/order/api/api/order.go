@@ -87,3 +87,29 @@ func GetOrderList(ctx *gin.Context) {
 	}
 	model.OkWithData(rsp, ctx)
 }
+
+//
+// UpdateOrderInfo
+//  @Description: 更新订单信息
+//  @param ctx
+//
+func UpdateOrderInfo(ctx *gin.Context) {
+	updateOrderInfoRequest := request.UpdateOrderInfoRequest{}
+	_ = ctx.ShouldBindJSON(&updateOrderInfoRequest)
+	msg, err := validate.Validate(updateOrderInfoRequest, global.Validate, global.Trans)
+	if err != nil {
+		model.FailWithMsg(msg, ctx)
+		return
+	}
+	_, err = global.OrderSrvClient.UpdateOrderStatus(ctx, &proto.OrderInfo{
+		UserID:  updateOrderInfoRequest.UserID,
+		OrderID: updateOrderInfoRequest.OrderID,
+		PayType: updateOrderInfoRequest.PayType,
+		Status:  updateOrderInfoRequest.Status,
+	})
+	if err != nil {
+		model.FailWithMsg(err.Error(), ctx)
+		return
+	}
+	model.OkWithMsg("更新成功", ctx)
+}
