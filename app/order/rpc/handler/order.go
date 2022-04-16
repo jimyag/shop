@@ -3,9 +3,13 @@ package handler
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"time"
 
+	"github.com/apache/rocketmq-client-go/v2"
+	"github.com/apache/rocketmq-client-go/v2/primitive"
+	"github.com/apache/rocketmq-client-go/v2/producer"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -211,16 +215,22 @@ func (server *OrderServer) UpdateCartItem(ctx context.Context, req *proto.Update
 	return &proto.Empty{}, nil
 }
 
-//
-// CreateOrder
-//  @Description: 新建订单
-//  @receiver server
-//  @param ctx
-//  @param req
-//  @return *proto.OrderInfo
-//  @return error
-//
-func (server *OrderServer) CreateOrder(ctx context.Context, req *proto.CreateOrderRequest) (*proto.OrderInfo, error) {
+type OrderListener struct {
+	Code        codes.Code
+	Detail      string
+	OrderID     int64
+	OrderAmount float32
+	server      *OrderServer
+	ctx         context.Context
+}
+
+func NewOrderListener(server *OrderServer, ctx context.Context) *OrderListener {
+	return &OrderListener{
+		server: server,
+		ctx:    ctx,
+	}
+}
+func (dl *OrderListener) ExecuteLocalTransaction(msg *primitive.Message) primitive.LocalTransactionState {
 	// 4. 从购物车中拿到选中的商品
 	// 1. 商品的金额自己查询 商品服务
 	// 2. 库存的扣减 库存服务
@@ -228,16 +238,27 @@ func (server *OrderServer) CreateOrder(ctx context.Context, req *proto.CreateOrd
 	//
 	// 5. 从购物车中删除已购买的记录
 	// 从购物车中拿到选中的商品
+	createOrderParams := model.CreateOrderParams{}
+	err := json.Unmarshal(msg.Body, &createOrderParams)
+	if err != nil {
+		global.Logger.Error("解析消息失败", zap.Error(err))
+		return primitive.RollbackMessageState
+	}
+
 	getCheckedCart := model.GetCartListCheckedParams{
-		UserID:  req.UserID,
+		UserID:  createOrderParams.UserID,
 		Checked: true,
 	}
 	goodsIDS := make([]*proto.GoodID, 0)
-	shoppingCart, err := server.Store.GetCartListChecked(ctx, getCheckedCart)
+	shoppingCart, err := dl.server.Store.GetCartListChecked(dl.ctx, getCheckedCart)
 	if shoppingCart == nil {
-		return &proto.OrderInfo{}, status.Error(codes.InvalidArgument, "没有选中的商品")
+		dl.Code = codes.InvalidArgument
+		dl.Detail = "购物车为空"
+		return primitive.RollbackMessageState
 	} else if err != nil {
-		return &proto.OrderInfo{}, status.Error(codes.Internal, "内部错误")
+		dl.Code = codes.Internal
+		dl.Detail = "获取购物车失败"
+		return primitive.RollbackMessageState
 	}
 
 	// 保存 商品的数量
@@ -246,12 +267,11 @@ func (server *OrderServer) CreateOrder(ctx context.Context, req *proto.CreateOrd
 		goodsIDS = append(goodsIDS, &proto.GoodID{Id: cart.GoodsID})
 		goodsNumMap[cart.GoodsID] = cart.Nums
 	}
-
-	// 连接商品服务
-	goodsInfos, err := global.GoodsClient.GetGoodsBatchInfo(ctx, &proto.ManyGoodsID{GoodsIDs: goodsIDS})
+	goodsInfos, err := global.GoodsClient.GetGoodsBatchInfo(dl.ctx, &proto.ManyGoodsID{GoodsIDs: goodsIDS})
 	if err != nil {
-		global.Logger.Error("批量获得goods info 失败", zap.Error(err))
-		return &proto.OrderInfo{}, status.Error(codes.Internal, "内部错误")
+		dl.Code = codes.Internal
+		dl.Detail = "获取商品信息失败"
+		return primitive.RollbackMessageState
 	}
 
 	// 订单的总金额
@@ -279,46 +299,42 @@ func (server *OrderServer) CreateOrder(ctx context.Context, req *proto.CreateOrd
 
 	// 跨服务调用 扣减库存
 
-	_, err = global.InventoryClient.Sell(ctx, &sellInfo)
+	_, err = global.InventoryClient.Sell(dl.ctx, &sellInfo)
 	if err != nil {
-		global.Logger.Error("扣减库存失败", zap.Error(err))
-		return &proto.OrderInfo{}, status.Error(codes.ResourceExhausted, "扣减库存失败")
+		// todo
+		// 如果是因为网络问题，这种如何避免
+		// sell 的返回逻辑 返回的状态码是否sell返回的状态码 如果是才进行rollback
+		dl.Code = codes.ResourceExhausted
+		dl.Detail = "扣减库存失败"
+		return primitive.RollbackMessageState
 	}
 
-	createOrderParams := model.CreateOrderParams{}
 	// 本地服务的事务
-	err = server.Store.ExecTx(ctx, func(queries *model.Queries) error {
-
-		// 生成订单表
-		createOrderParams = model.CreateOrderParams{
-			UserID:  req.UserID,
-			OrderID: generate.GenerateOrderID(req.UserID),
-			Status:  1, // 1 待支付 2 成功 3 超时关闭
-			OrderMount: sql.NullFloat64{
-				Float64: float64(orderAmount),
-				Valid:   true,
-			},
-			Address:      req.Address,
-			SignerName:   req.Name,
-			SignerMobile: req.Mobile,
-			Post:         req.Post,
+	err = dl.server.Store.ExecTx(dl.ctx, func(queries *model.Queries) error {
+		createOrderParams.OrderMount = sql.NullFloat64{
+			Float64: float64(orderAmount),
+			Valid:   true,
 		}
-
 		// 保存order
-		_, err = server.Store.CreateOrder(ctx, createOrderParams)
+		_, err = dl.server.Store.CreateOrder(dl.ctx, createOrderParams)
 		if err != nil {
+			dl.Code = codes.Internal
+			dl.Detail = "保存订单失败"
 			return err
 		}
+		dl.OrderAmount = orderAmount
 
 		// 将订单id更新
 		for _, good := range createOrderGoodsParams {
 			good.OrderID = createOrderParams.OrderID
 		}
 		// 批量插入订单中的商品
-		err = server.Store.ExecTx(ctx, func(queries *model.Queries) error {
+		err = dl.server.Store.ExecTx(dl.ctx, func(queries *model.Queries) error {
 			for _, good := range createOrderGoodsParams {
-				_, err = queries.CreateOrderGoods(ctx, *good)
+				_, err = queries.CreateOrderGoods(dl.ctx, *good)
 				if err != nil {
+					dl.Code = codes.Internal
+					dl.Detail = "保存订单商品失败"
 					return err
 				}
 			}
@@ -329,14 +345,16 @@ func (server *OrderServer) CreateOrder(ctx context.Context, req *proto.CreateOrd
 		}
 
 		// 批量删除购物车中记录
-		err = server.Store.ExecTx(ctx, func(queries *model.Queries) error {
+		err = dl.server.Store.ExecTx(dl.ctx, func(queries *model.Queries) error {
 			for _, cart := range shoppingCart {
-				_, err = queries.DeleteCartItem(ctx, model.DeleteCartItemParams{
+				_, err = queries.DeleteCartItem(dl.ctx, model.DeleteCartItemParams{
 					DeletedAt: sql.NullTime{Time: time.Now(), Valid: true},
 					UserID:    cart.UserID,
 					GoodsID:   cart.GoodsID,
 				})
 				if err != nil {
+					dl.Code = codes.Internal
+					dl.Detail = "删除购物车中商品失败"
 					return err
 				}
 			}
@@ -347,13 +365,91 @@ func (server *OrderServer) CreateOrder(ctx context.Context, req *proto.CreateOrd
 		}
 		return nil
 	})
+	// 如果有错就要把库存归还
 	if err != nil {
-		global.Logger.Error("创建订单失败", zap.Error(err))
-		return &proto.OrderInfo{}, status.Error(codes.Internal, "内部错误")
+		return primitive.CommitMessageState
 	}
+	return primitive.RollbackMessageState
+}
+
+func (dl *OrderListener) CheckLocalTransaction(msg *primitive.MessageExt) primitive.LocalTransactionState {
+	createOrderParams := model.CreateOrderParams{}
+	err := json.Unmarshal(msg.Body, &createOrderParams)
+	if err != nil {
+		global.Logger.Error("解析消息失败", zap.Error(err))
+		return primitive.RollbackMessageState
+	}
+
+	_, err = dl.server.GetOrderDetail(dl.ctx, &proto.GetOrderDetailRequest{OrderID: createOrderParams.OrderID})
+	if err != nil {
+		// 没有扣减的库存不能被归还
+		return primitive.CommitMessageState
+	}
+	return primitive.RollbackMessageState
+}
+
+//
+// CreateOrder
+//  @Description: 新建订单
+//  @receiver server
+//  @param ctx
+//  @param req
+//  @return *proto.OrderInfo
+//  @return error
+//
+func (server *OrderServer) CreateOrder(ctx context.Context, req *proto.CreateOrderRequest) (*proto.OrderInfo, error) {
+	orderlistener := NewOrderListener(server, ctx)
+	p, err := rocketmq.NewTransactionProducer(
+		orderlistener,
+		producer.WithNameServer([]string{"192.168.0.2:9876"}),
+	)
+
+	if err != nil {
+		global.Logger.Error("创建生产者失败", zap.Error(err))
+		return &proto.OrderInfo{}, status.Error(codes.Internal, "创建生产者失败")
+	}
+	err = p.Start()
+	if err != nil {
+		global.Logger.Error("启动生产者失败", zap.Error(err))
+		return &proto.OrderInfo{}, status.Error(codes.Internal, "启动生产者失败")
+	}
+	topic := "order_reback"
+
+	// 一定要在这边生成订单号
+	createOrderParams := model.CreateOrderParams{
+		UserID:       req.UserID,
+		OrderID:      generate.GenerateOrderID(req.UserID),
+		Status:       1, // 1 待支付 2 成功 3 超时关闭
+		Address:      req.Address,
+		SignerName:   req.Name,
+		SignerMobile: req.Mobile,
+		Post:         req.Post,
+	}
+	jsonString, err := json.Marshal(createOrderParams)
+	if err != nil {
+		global.Logger.Error("序列化失败", zap.Error(err))
+		return &proto.OrderInfo{}, status.Error(codes.Internal, "序列化失败")
+	}
+	res, err := p.SendMessageInTransaction(
+		ctx,
+		primitive.NewMessage(
+			topic,
+			jsonString,
+		),
+	)
+
+	if res.State == primitive.CommitMessageState {
+		return &proto.OrderInfo{}, status.Error(codes.Internal, "创建订单失败")
+	}
+
+	if err != nil {
+		global.Logger.Error("发送消息失败", zap.Error(err))
+		return &proto.OrderInfo{}, status.Error(codes.Internal, "发送消息失败")
+	}
+
 	return &proto.OrderInfo{
 		OrderID: createOrderParams.OrderID,
-		Total:   orderAmount,
+		Total:   orderlistener.OrderAmount,
 	}, nil
 }
 
