@@ -72,7 +72,19 @@ func GetShopCartList(ctx *gin.Context) {
 //  @param ctx
 //
 func DeleteShopCartItem(ctx *gin.Context) {
-
+	deleteShopCartRequest := request.DeleteShopCartRequest{}
+	_ = ctx.ShouldBindJSON(&deleteShopCartRequest)
+	msg, err := validate.Validate(deleteShopCartRequest, global.Validate, global.Trans)
+	if err != nil {
+		model.FailWithMsg(msg, ctx)
+		return
+	}
+	_, err = global.OrderSrvClient.DeleteCartItems(ctx, &proto.DeleteCartItemsRequest{})
+	if err != nil {
+		model.FailWithMsg(err.Error(), ctx)
+		return
+	}
+	model.Ok(ctx)
 }
 
 //
