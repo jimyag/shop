@@ -19,3 +19,12 @@ set updated_at = $1,
 where goods_id = $2
 returning *;
 
+
+-- name: CreateSellDetail :one
+INSERT INTO "stock_sell_detail"(order_id,
+                                status, detail)
+values ($1, $2, $3::goodsdetail[])
+returning *;
+
+
+

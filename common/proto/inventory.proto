@@ -12,6 +12,7 @@ service inventory{
 
 message SellInfo{
   repeated GoodInvInfo goodsInfo = 1;
+  int64 orderId = 2;
 }
 message GoodInvInfo{
   int32 goodsId = 1;

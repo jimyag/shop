@@ -8,6 +8,7 @@ import (
 
 type Querier interface {
 	CreateInventory(ctx context.Context, arg CreateInventoryParams) (Inventory, error)
+	CreateSellDetail(ctx context.Context, arg CreateSellDetailParams) (StockSellDetail, error)
 	GetInventoryByGoodsID(ctx context.Context, goodsID int32) (Inventory, error)
 	UpdateInventory(ctx context.Context, arg UpdateInventoryParams) (Inventory, error)
 }

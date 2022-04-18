@@ -18,11 +18,12 @@ type Inventory struct {
 }
 
 type StockSellDetail struct {
-	ID        int64        `json:"id"`
-	CreatedAt time.Time    `json:"created_at"`
-	UpdatedAt time.Time    `json:"updated_at"`
-	DeletedAt sql.NullTime `json:"deleted_at"`
-	OrderID   int32        `json:"order_id"`
-	Status    int32        `json:"status"`
-	Detail    int32        `json:"detail"`
+	OrderID int64         `json:"order_id"`
+	Status  int16         `json:"status"`
+	Detail  []GoodsDetail `json:"detail"`
+}
+
+type GoodsDetail struct {
+	GoodsID int32 `json:"goods_id"`
+	Nums    int32 `json:"nums"`
 }

@@ -7,6 +7,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/apache/rocketmq-client-go/v2"
+	"github.com/apache/rocketmq-client-go/v2/consumer"
 	"github.com/opentracing/opentracing-go"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -130,6 +132,14 @@ func main() {
 			global.Logger.Fatal("运行服务失败", zap.Error(err))
 		}
 	}()
+	// 监听库存归还的topic
+	c, _ := rocketmq.NewPushConsumer(
+		consumer.WithNameServer([]string{"192.168.0.2:9876"}),
+		consumer.WithGroupName("inventory-group"))
+
+	if err = c.Subscribe("order_reback", consumer.MessageSelector{}); err != nil {
+		global.Logger.Error("订阅库存归还消息失败", zap.Error(err))
+	}
 
 	// 监听终止事件
 	quit := make(chan os.Signal, 1)

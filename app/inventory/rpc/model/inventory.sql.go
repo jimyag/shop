@@ -6,6 +6,8 @@ package model
 import (
 	"context"
 	"time"
+
+	"github.com/lib/pq"
 )
 
 const createInventory = `-- name: CreateInventory :one
@@ -34,6 +36,26 @@ func (q *Queries) CreateInventory(ctx context.Context, arg CreateInventoryParams
 		&i.Sticks,
 		&i.Version,
 	)
+	return i, err
+}
+
+const createSellDetail = `-- name: CreateSellDetail :one
+INSERT INTO "stock_sell_detail"(order_id,
+                                status, detail)
+values ($1, $2, $3::goodsdetail[])
+returning order_id, status, detail
+`
+
+type CreateSellDetailParams struct {
+	OrderID int64         `json:"order_id"`
+	Status  int16         `json:"status"`
+	Detail  []GoodsDetail `json:"detail"`
+}
+
+func (q *Queries) CreateSellDetail(ctx context.Context, arg CreateSellDetailParams) (StockSellDetail, error) {
+	row := q.db.QueryRowContext(ctx, createSellDetail, arg.OrderID, arg.Status, pq.Array(arg.Detail))
+	var i StockSellDetail
+	err := row.Scan(&i.OrderID, &i.Status, pq.Array(&i.Detail))
 	return i, err
 }
 

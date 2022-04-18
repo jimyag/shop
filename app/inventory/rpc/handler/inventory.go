@@ -3,10 +3,13 @@ package handler
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
 
+	"github.com/apache/rocketmq-client-go/v2/consumer"
+	"github.com/apache/rocketmq-client-go/v2/primitive"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -113,8 +116,17 @@ func (i *InventoryServer) Sell(ctx context.Context, req *proto.SellInfo) (*proto
 
 	// 拿到所有的商品，
 	err := i.ExecTx(ctx, func(queries *model.Queries) error {
-		for _, info := range req.GoodsInfo {
 
+		sellDetail := model.StockSellDetail{
+			OrderID: req.OrderId,
+			Status:  1, // 默认表示已经扣减了
+		}
+		details := make([]model.GoodsDetail, 0)
+		for _, info := range req.GoodsInfo {
+			details = append(details, model.GoodsDetail{
+				GoodsID: info.GoodsId,
+				Nums:    info.Num,
+			})
 			// 分布式锁
 			mutex := global.RedSync.NewMutex(fmt.Sprintf("goods_%d", info.GoodsId))
 			if err := mutex.Lock(); err != nil {
@@ -148,6 +160,15 @@ func (i *InventoryServer) Sell(ctx context.Context, req *proto.SellInfo) (*proto
 			if ok, err := mutex.Unlock(); !ok || err != nil {
 				return status.Error(codes.Internal, "内部错误-释放分布式锁失败")
 			}
+		}
+		sellDetail.Detail = details
+		_, err := queries.CreateSellDetail(ctx, model.CreateSellDetailParams{
+			OrderID: sellDetail.OrderID,
+			Status:  sellDetail.Status,
+			Detail:  sellDetail.Detail,
+		})
+		if err != nil {
+			return err
 		}
 		return nil
 	})
@@ -190,4 +211,34 @@ func (i *InventoryServer) Rollback(ctx context.Context, req *proto.SellInfo) (*p
 	}
 
 	return &proto.Empty{}, nil
+}
+
+func AutoRollBack(ctx context.Context, msgs ...*primitive.MessageExt) (consumer.ConsumeResult, error) {
+	type OrderInfo struct {
+		OrderID int64 `json:"order_id"`
+	}
+	for _, msg := range msgs {
+		// 既然要归还库存，就应该直到每件商品应该归还多少， 这时候出现 重复归还的问题
+		// 这个接口应该保证幂等性，不能因为消息的重复发送而导致一个订单的库存归还多次，没有扣减的库存不能归还。
+		// 新建一张表，记录了详细的订单扣减细节，以及归还的情况
+		var orderInfo OrderInfo
+		err := json.Unmarshal(msg.Body, &orderInfo)
+		if err != nil {
+			global.Logger.Error("JSON 解析失败", zap.Error(err))
+			// 根据业务来，如果赶紧时自己代码问题就用
+			//return consumer.ConsumeRetryLater,nil
+			// 否则就直接忽略这个消息
+			return consumer.ConsumeSuccess, nil
+		}
+		// 将inv的库存加回去，同时将sell status 变为2
+		// todo
+		_, err = global.DB.Begin()
+		if err != nil {
+			global.Logger.Error("获得事务失败", zap.Error(err))
+			return consumer.ConsumeRetryLater, nil
+		}
+
+		//	将状态变为2
+	}
+	return consumer.ConsumeSuccess, nil
 }
